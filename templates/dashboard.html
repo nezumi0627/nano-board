@@ -748,7 +748,7 @@ html.dark .session-icon-bg { background: #000 !important; }
         </div>
 
         <!-- Gauges -->
-        <template x-if="data.process.running">
+        <template x-if="data.gateway.running">
           <div class="card card-animate" style="margin-bottom:12px;">
             <div class="gauges">
               <div class="gauge">
@@ -784,7 +784,7 @@ html.dark .session-icon-bg { background: #000 !important; }
         </template>
 
         <!-- Process Info -->
-        <template x-if="data.process.running">
+        <template x-if="data.gateway.running">
           <div class="card-animate">
             <div class="section-label">Process</div>
             <div class="card">
@@ -808,17 +808,36 @@ html.dark .session-icon-bg { background: #000 !important; }
                 <span class="row-title">Uptime</span>
                 <span class="row-end" x-text="fmtUptime(data.process.uptime_seconds)"></span>
               </div>
+              <div style="padding:12px 16px 16px;display:grid;grid-template-columns:1fr 1fr;gap:12px;border-top:0.33px solid var(--separator);">
+                <button class="gw-btn"
+                  :class="{ 'gw-loading': gwLoading === 'restart' }"
+                  @click="controlGateway('restart')"
+                  style="padding:12px;flex-direction:row;gap:10px;">
+                  <div class="gw-icon" style="background:var(--orange);width:28px;height:28px;"><i data-lucide="refresh-cw" style="width:14px;height:14px;"></i></div>
+                  <span>Restart</span>
+                </button>
+                <button class="gw-btn"
+                  :class="{ 'gw-loading': gwLoading === 'stop' }"
+                  @click="controlGateway('stop')"
+                  style="padding:12px;flex-direction:row;gap:10px;">
+                  <div class="gw-icon" style="background:var(--red);width:28px;height:28px;"><i data-lucide="square" style="width:14px;height:14px;"></i></div>
+                  <span>Stop</span>
+                </button>
+              </div>
             </div>
           </div>
         </template>
 
         <!-- Stopped -->
-        <template x-if="!data.process.running">
+        <template x-if="!data.gateway.running">
           <div class="card card-animate">
             <div class="placeholder">
               <div class="placeholder-icon"><i data-lucide="power"></i></div>
               <div class="placeholder-title">Process Stopped</div>
               <div class="placeholder-sub">Nanobot is not running</div>
+              <button class="btn-primary" @click="controlGateway('start')" style="margin-top:16px;width:auto;display:inline-flex;align-items:center;gap:6px;">
+                <i data-lucide="play" style="width:16px;height:16px;"></i> Start Nanobot
+              </button>
             </div>
           </div>
         </template>
@@ -837,41 +856,7 @@ html.dark .session-icon-bg { background: #000 !important; }
           </div>
         </div>
 
-        <!-- Gateway Control (inline status, no popup) -->
-        <div class="card-animate">
-          <div class="section-label">Gateway Control</div>
-          <div class="card">
-            <div class="gw-grid">
-              <button class="gw-btn"
-                :class="{ 'gw-active': data.gateway?.running, 'gw-loading': gwLoading === 'start' }"
-                @click="controlGateway('start')"
-                :disabled="data.gateway?.running"
-                :style="{opacity: data.gateway?.running ? 0.4 : 1}">
-                <div class="gw-icon" style="background:var(--green);"><i data-lucide="play"></i></div>
-                <span>Start</span>
-                <div class="gw-status-text" :class="gwStatusClass('start')" x-text="gwStatusText('start')"></div>
-              </button>
-              <button class="gw-btn"
-                :class="{ 'gw-loading': gwLoading === 'stop' }"
-                @click="controlGateway('stop')"
-                :disabled="!data.gateway?.running"
-                :style="{opacity: !data.gateway?.running ? 0.4 : 1}">
-                <div class="gw-icon" style="background:var(--red);"><i data-lucide="square"></i></div>
-                <span>Stop</span>
-                <div class="gw-status-text" :class="gwStatusClass('stop')" x-text="gwStatusText('stop')"></div>
-              </button>
-              <button class="gw-btn"
-                :class="{ 'gw-loading': gwLoading === 'restart' }"
-                @click="controlGateway('restart')"
-                :disabled="!data.gateway?.running"
-                :style="{opacity: !data.gateway?.running ? 0.4 : 1}">
-                <div class="gw-icon" style="background:var(--orange);"><i data-lucide="refresh-cw"></i></div>
-                <span>Restart</span>
-                <div class="gw-status-text" :class="gwStatusClass('restart')" x-text="gwStatusText('restart')"></div>
-              </button>
-            </div>
-          </div>
-        </div>
+
 
         <!-- Tailscale -->
         <div class="card-animate">
@@ -1115,15 +1100,18 @@ html.dark .session-icon-bg { background: #000 !important; }
     <div class="section-label" style="padding-top:8px;">Profile</div>
     <div class="card card-animate">
       <div class="info-profile-card">
-        <div class="info-avatar">N</div>
-        <div class="info-name">nezumi0627</div>
-        <div class="info-sub">Nanobot User</div>
+        <img src="/static/avatar.png" class="info-avatar" style="object-fit:cover;background:none;">
+        <div class="info-name">ねずみ(nezumi0627)</div>
+        <div class="info-sub" x-text="data?.config?.model ? data.config.model.split('/').pop() : 'Loading...'"></div>
         <div class="info-social">
           <a href="https://github.com/nezumi0627" target="_blank" rel="noopener noreferrer" class="info-social-btn" aria-label="GitHub">
             <i data-lucide="github"></i>
           </a>
           <a href="https://x.com/nezum1n1um" target="_blank" rel="noopener noreferrer" class="info-social-btn" aria-label="X">
             <svg viewBox="0 0 24 24" style="width:18px;height:18px;fill:currentColor;"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+          </a>
+          <a href="https://t.me/nezumi0627" target="_blank" rel="noopener noreferrer" class="info-social-btn" aria-label="Telegram">
+            <i data-lucide="send"></i>
           </a>
         </div>
       </div>

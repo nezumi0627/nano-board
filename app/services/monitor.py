@@ -8,47 +8,84 @@ import os
 class MonitorService:
     def __init__(self):
         self.lock = threading.Lock()
+        self._gateway_process = None
         self._cpu_usage = 0.0
+        self._memory_mb = 0.0
+        self._memory_percent = 0.0
+        self._pid = 0
+        self._uptime = 0
+        self._disk_percent = 0.0
+        
         self._running = True
         self._thread = threading.Thread(target=self._monitor_loop, daemon=True)
         self._thread.start()
 
+    def _find_process(self):
+        for p in psutil.process_iter(['pid', 'name', 'cmdline']):
+            try:
+                cmdline = p.info['cmdline']
+                # cmdline is a list of strings
+                if cmdline and 'gateway' in cmdline:
+                    # Check if 'nanobot' is in any of the arguments (path or argument)
+                    if any('nanobot' in arg for arg in cmdline):
+                        return p
+            except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+                pass
+        return None
+
     def _monitor_loop(self):
         while self._running:
-            # WSLでのCPU取得を安定させるためにintervalを設ける
             try:
-                # interval=1.0 blocks for 1 second, giving accurate result
-                cpu = psutil.cpu_percent(interval=1.0)
-                with self.lock:
-                    self._cpu_usage = cpu
+                # Update disk stats (system wide)
+                self._disk_percent = psutil.disk_usage('/').percent
+
+                # Manage Gateway Process
+                if not self._gateway_process or not self._gateway_process.is_running():
+                    self._gateway_process = self._find_process()
+                
+                if self._gateway_process:
+                    # First call to cpu_percent with interval=None returns 0.0
+                    # Subsequent calls return usage since last call
+                    # We rely on the loop's sleep for the interval
+                    cpu = self._gateway_process.cpu_percent(interval=None)
+                    
+                    # Use oneshot for efficiency
+                    with self._gateway_process.oneshot():
+                        mem_info = self._gateway_process.memory_info()
+                        mem_percent = self._gateway_process.memory_percent()
+                        create_time = self._gateway_process.create_time()
+                        pid = self._gateway_process.pid
+                    
+                    with self.lock:
+                        self._cpu_usage = cpu
+                        self._memory_mb = mem_info.rss / (1024 * 1024)
+                        self._memory_percent = mem_percent
+                        self._pid = pid
+                        self._uptime = time.time() - create_time
+                else:
+                    with self.lock:
+                        self._cpu_usage = 0.0
+                        self._memory_mb = 0.0
+                        self._memory_percent = 0.0
+                        self._pid = 0
+                        self._uptime = 0
+                        
             except Exception as e:
-                print(f"Error in monitor loop: {e}")
-                time.sleep(1)
+                # print(f"Error in monitor loop: {e}")
+                self._gateway_process = None
+            
+            time.sleep(1)
 
     def get_system_stats(self):
         with self.lock:
-            cpu = self._cpu_usage
-        
-        mem = psutil.virtual_memory()
-        disk = psutil.disk_usage('/')
-        
-        try:
-            p = psutil.Process(os.getpid())
-            uptime = time.time() - p.create_time()
-            pid = p.pid
-        except:
-            uptime = 0
-            pid = 0
-
-        return {
-            "cpu_percent": cpu,
-            "memory_percent": mem.percent,
-            "memory_used": mem.used / (1024 * 1024),
-            "memory_total": mem.total / (1024 * 1024),
-            "disk_percent": disk.percent,
-            "uptime_seconds": uptime,
-            "pid": pid
-        }
+            return {
+                "cpu_percent": self._cpu_usage,
+                "memory_percent": self._memory_percent,
+                "memory_mb": self._memory_mb,
+                "disk_percent": self._disk_percent,
+                "uptime_seconds": self._uptime,
+                "pid": self._pid
+            }
 
     def get_tailscale_status(self):
         try:

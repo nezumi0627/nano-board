@@ -3,7 +3,7 @@ import os
 
 class ProcessService:
     def __init__(self):
-        self.session_name = "nanobot"
+        self.session_name = "nanobot-gateway"
         # ユーザーは nanobot gateway の制御を求めている
         # start-nanobot.sh のロジックを参照
         # ただし、ここではダッシュボードとは別のtmuxセッション(nanobot)を操作する前提

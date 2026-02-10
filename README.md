@@ -47,10 +47,12 @@ tailscale funnel status  # URLを確認
 Nanobotを起動すると、コンソールも自動的に起動します:
 
 ```bash
+cd /home/nezumi0627/nano-board
 ./start-nanobot.sh
 ```
 
 これにより、Nanobot Gatewayとコンソールの両方がtmuxセッションで起動します。
+`start-nanobot.sh` は内部で `./start.sh` を呼び出し、安全な起動処理を行います。
 
 ### 手動起動
 
