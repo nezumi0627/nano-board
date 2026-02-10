@@ -1,26 +1,23 @@
-# Nanobot Status Dashboard
+# NanoBoard
 
-Tailscale認証を使用したnanobotステータスダッシュボードです。
+Tailscale認証を使用したNanobot管理コンソールです。
 
 ## 機能
 
-- nanobotプロセスの状態監視（実行中/停止中、PID、稼働時間、メモリ使用量、CPU使用率）
-- nanobot設定情報の表示（Gateway、モデル、チャネル設定）
-- セッション情報の表示（セッション数、メッセージ数、最新アクティビティ）
-- Cronジョブの状態表示
-- Tailscale認証によるアクセス制御
-- 手動更新（自動更新なし）
-- nanobot起動時に自動起動
+- **モニタリング**: Nanobotプロセスの状態監視（PID, Uptime, Memory, CPU）
+- **詳細情報**: 設定情報（Gateway, Model, Channels）やセッション詳細の表示
+- **ネットワーク**: Tailscaleの状態とFunnel URLの表示
+- **ジョブ管理**: Cronジョブの状態確認
+- **PWA対応**: iOS/Androidでのアプリ化と更新機能（Service Worker）
+- **セキュリティ**: Tailscale認証によるアクセス制御
 
 ## クイックスタート
 
 ### 1. セットアップ
 
 ```bash
-cd /home/nezumi0627/nanobot-dashboard
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
+cd /home/nezumi0627/nano-board
+./install.sh
 ```
 
 ### 2. 起動
@@ -45,18 +42,18 @@ tailscale funnel status  # URLを確認
 
 ### 自動起動（推奨）
 
-nanobotを起動すると、ダッシュボードも自動的に起動します:
+Nanobotを起動すると、コンソールも自動的に起動します:
 
 ```bash
 ./start-nanobot.sh
 ```
 
-これにより、nanobot gatewayとダッシュボードの両方がtmuxセッションで起動します。
+これにより、Nanobot Gatewayとコンソールの両方がtmuxセッションで起動します。
 
 ### 手動起動
 
 ```bash
-cd /home/nezumi0627/nanobot-dashboard
+cd /home/nezumi0627/nano-board
 ./start.sh
 ```
 
@@ -100,15 +97,10 @@ export REQUIRE_TAILSCALE_AUTH=true  # Tailscale認証（デフォルト: true）
 ## ファイル構成
 
 ```
-nanobot-dashboard/
-├── app.py              # Flaskアプリケーション
-├── start.sh            # 起動スクリプト
-├── setup-funnel.sh     # Tailscale Funnel設定スクリプト
-├── requirements.txt    # Python依存関係
-├── README.md           # このファイル
-├── .gitignore          # Git除外設定
-└── templates/
-    └── dashboard.html  # ダッシュボードUI
+nano-board/
+├── app.py              # Flaskアプリケーション本体
+├── requirements.txt    # 依存ライブラリ
+├── static/             # 静的ファイル (CSS, JS, Images)
 ```
 
 ## 注意事項

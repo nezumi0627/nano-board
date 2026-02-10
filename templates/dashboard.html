@@ -2,17 +2,17 @@
 <html lang="ja" id="htmlRoot">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no, maximum-scale=1">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#000000" id="themeColor">
+<meta name="format-detection" content="telephone=no">
+<link rel="manifest" href="/static/manifest.json">
+<link rel="apple-touch-icon" href="/static/icon-192.png">
 <title>Nanobot Console</title>
 
-<!-- Alpine.js -->
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
-<!-- GSAP -->
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/gsap.min.js"></script>
-<!-- Lucide Icons -->
 <script src="https://cdn.jsdelivr.net/npm/lucide@0.460.0/dist/umd/lucide.min.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -26,6 +26,7 @@
   --bg-primary: #F2F2F7;
   --bg-elevated: #FFFFFF;
   --bg-secondary: #FFFFFF;
+  --bg-grouped: #F2F2F7;
   --separator: rgba(60, 60, 67, 0.09);
   --label-primary: #1C1C1E;
   --label-secondary: rgba(60, 60, 67, 0.55);
@@ -44,11 +45,15 @@
   --purple: #AF52DE;
   --purple-soft: rgba(175, 82, 222, 0.12);
   --cyan: #32ADE6;
-  --nav-blur: rgba(242, 242, 247, 0.78);
+  --cyan-soft: rgba(50, 173, 230, 0.12);
+  --indigo: #5856D6;
+  --indigo-soft: rgba(88, 86, 214, 0.12);
+  --nav-blur: rgba(242, 242, 247, 0.72);
   --card-shadow: 0 0 0 0.5px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.04);
-  --radius: 12px;
+  --radius: 14px;
   --spring: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-out: cubic-bezier(0, 0, 0.15, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   color-scheme: light;
 }
 
@@ -56,6 +61,7 @@ html.dark {
   --bg-primary: #000000;
   --bg-elevated: #1C1C1E;
   --bg-secondary: #1C1C1E;
+  --bg-grouped: #000000;
   --separator: rgba(84, 84, 88, 0.36);
   --label-primary: #F5F5F7;
   --label-secondary: rgba(235, 235, 245, 0.55);
@@ -74,13 +80,16 @@ html.dark {
   --purple: #BF5AF2;
   --purple-soft: rgba(191, 90, 242, 0.18);
   --cyan: #64D2FF;
-  --nav-blur: rgba(22, 22, 22, 0.82);
-  --card-shadow: 0 0 0 0.5px rgba(255,255,255,0.05);
+  --cyan-soft: rgba(100, 210, 255, 0.18);
+  --indigo: #5E5CE6;
+  --indigo-soft: rgba(94, 92, 230, 0.18);
+  --nav-blur: rgba(18, 18, 18, 0.78);
+  --card-shadow: 0 0 0 0.5px rgba(255,255,255,0.06);
   color-scheme: dark;
 }
 
 html {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
@@ -88,917 +97,804 @@ html {
   color: var(--label-primary);
   overflow-x: hidden;
   font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
-  transition: background 0.3s ease, color 0.3s ease;
+  transition: background 0.4s var(--ease-out), color 0.3s ease;
 }
 body {
   min-height: 100dvh;
   overscroll-behavior-y: contain;
   background: var(--bg-primary);
   color: var(--label-primary);
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
 }
 
-/* ===========================
-   Top Bar
-   =========================== */
+.scroll-area {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* ===== Top Bar ===== */
 .top-bar {
-  position: sticky;
-  top: 0;
-  z-index: 100;
+  position: sticky; top: 0; z-index: 100;
   background: var(--nav-blur);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border-bottom: 0.5px solid var(--separator);
+  backdrop-filter: blur(28px) saturate(200%);
+  -webkit-backdrop-filter: blur(28px) saturate(200%);
+  border-bottom: 0.33px solid var(--separator);
   padding-top: env(safe-area-inset-top, 0);
+  transition: background 0.3s ease;
 }
 .top-bar-inner {
-  max-width: 720px;
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 20px;
-  min-height: 44px;
+  max-width: 720px; margin: 0 auto;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 20px; min-height: 44px;
 }
 .top-title {
-  font-size: 17px;
-  font-weight: 600;
-  letter-spacing: -0.4px;
-  color: var(--label-primary);
+  font-size: 17px; font-weight: 700; letter-spacing: -0.41px;
+  color: var(--label-primary); display: flex; align-items: center; gap: 6px;
 }
-.top-actions {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-}
+.top-actions { display: flex; align-items: center; gap: 4px; }
 .icon-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  border: none;
-  background: transparent;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  color: var(--tint);
+  width: 38px; height: 38px; border-radius: 50%; border: none; background: transparent;
+  display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--tint);
   -webkit-tap-highlight-color: transparent;
-  transition: background 0.12s ease, transform 0.12s ease;
+  transition: background 0.15s ease, transform 0.15s var(--ease-spring);
 }
 .icon-btn:hover { background: var(--fill-tertiary); }
-.icon-btn:active { transform: scale(0.88); opacity: 0.6; }
+.icon-btn:active { transform: scale(0.82); }
 .icon-btn svg { width: 20px; height: 20px; stroke-width: 1.8; }
 
-/* ===========================
-   Content Area
-   =========================== */
+/* ===== Content Area ===== */
 .content-area {
-  max-width: 720px;
-  margin: 0 auto;
-  padding: 12px 16px calc(90px + env(safe-area-inset-bottom, 20px));
+  max-width: 720px; margin: 0 auto;
+  padding: 8px 16px calc(88px + env(safe-area-inset-bottom, 20px));
 }
-@media (min-width: 720px) {
-  .content-area { padding: 20px 24px calc(90px + 20px); }
-}
+@media (min-width: 720px) { .content-area { padding: 16px 24px calc(88px + 20px); } }
 
-/* ===========================
-   Section Label
-   =========================== */
+/* ===== Section Label ===== */
 .section-label {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--label-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-  padding: 16px 4px 6px;
+  font-size: 13px; font-weight: 600; color: var(--label-secondary);
+  text-transform: uppercase; letter-spacing: 0.04em; padding: 20px 4px 8px;
 }
-.section-label:first-child { padding-top: 4px; }
+.section-label:first-child { padding-top: 8px; }
 
-/* ===========================
-   Card
-   =========================== */
+/* ===== Card ===== */
 .card {
-  background: var(--bg-elevated);
-  border-radius: var(--radius);
-  box-shadow: var(--card-shadow);
-  overflow: hidden;
+  background: var(--bg-elevated); border-radius: var(--radius);
+  box-shadow: var(--card-shadow); overflow: hidden;
+  transform: translateZ(0); will-change: transform;
 }
 .card + .section-label { padding-top: 24px; }
 .card + .card { margin-top: 12px; }
 
-/* ===========================
-   Hero Status
-   =========================== */
-.hero {
-  padding: 20px;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
+/* ===== Hero Status ===== */
+.hero { padding: 20px; display: flex; align-items: center; gap: 16px; }
 .hero-icon {
-  width: 52px;
-  height: 52px;
-  border-radius: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  transition: background 0.4s var(--ease-out);
+  width: 54px; height: 54px; border-radius: 15px;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  transition: background 0.5s var(--ease-out), transform 0.3s var(--ease-spring);
 }
 .hero-icon svg { width: 24px; height: 24px; stroke-width: 1.8; }
 .hero-body { flex: 1; min-width: 0; }
-.hero-name {
-  font-size: 20px;
-  font-weight: 700;
-  letter-spacing: -0.4px;
-  line-height: 1.2;
-}
-.hero-sub {
-  font-size: 13px;
-  color: var(--label-secondary);
-  margin-top: 2px;
-  letter-spacing: -0.1px;
-}
-.hero-footer {
-  padding: 0 20px 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
+.hero-name { font-size: 20px; font-weight: 700; letter-spacing: -0.45px; line-height: 1.2; }
+.hero-sub { font-size: 13px; color: var(--label-secondary); margin-top: 3px; letter-spacing: -0.1px; }
+.hero-footer { padding: 0 20px 16px; display: flex; align-items: center; justify-content: space-between; }
 .pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 12px;
-  border-radius: 100px;
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: -0.1px;
-  transition: background 0.3s, color 0.3s;
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 12px; border-radius: 100px; font-size: 13px; font-weight: 600; letter-spacing: -0.1px;
+  transition: background 0.4s, color 0.4s, transform 0.2s var(--ease-spring);
 }
-.pill-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-@keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+.pill:active { transform: scale(0.95); }
+.pill-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+@keyframes pulse-dot { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.85); } }
 .pill-dot.live { animation: pulse-dot 2s ease-in-out infinite; }
-.ts-label {
-  font-size: 12px;
-  color: var(--label-tertiary);
-  font-variant-numeric: tabular-nums;
-  letter-spacing: -0.1px;
-}
+.ts-label { font-size: 12px; color: var(--label-tertiary); font-variant-numeric: tabular-nums; letter-spacing: -0.1px; }
 
-/* ===========================
-   Gauges
-   =========================== */
-.gauges {
-  display: flex;
-  justify-content: center;
-  gap: 36px;
-  padding: 24px 20px 20px;
-}
+/* ===== Gauges ===== */
+.gauges { display: flex; justify-content: center; gap: 40px; padding: 24px 20px 20px; }
 @media (min-width: 720px) { .gauges { gap: 56px; } }
-.gauge {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-}
-.gauge-ring-wrap {
-  position: relative;
-  width: 84px;
-  height: 84px;
-}
-@media (min-width: 720px) { .gauge-ring-wrap { width: 100px; height: 100px; } }
+.gauge { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.gauge-ring-wrap { position: relative; width: 88px; height: 88px; }
+@media (min-width: 720px) { .gauge-ring-wrap { width: 104px; height: 104px; } }
 .gauge-ring-wrap svg { width: 100%; height: 100%; transform: rotate(-90deg); }
-.gauge-track { fill: none; stroke: var(--fill-tertiary); stroke-width: 4.5; }
-.gauge-value { fill: none; stroke-width: 4.5; stroke-linecap: round; transition: stroke-dashoffset 1s var(--spring), stroke 0.4s ease; }
+.gauge-track { fill: none; stroke: var(--fill-tertiary); stroke-width: 5; stroke-linecap: round; }
+.gauge-value { fill: none; stroke-width: 5; stroke-linecap: round; transition: stroke-dashoffset 0.8s var(--spring), stroke 0.5s ease; }
 .gauge-center {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 15px;
-  font-weight: 700;
-  letter-spacing: -0.4px;
-  color: var(--label-primary);
-  font-variant-numeric: tabular-nums;
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 16px; font-weight: 700; letter-spacing: -0.5px;
+  color: var(--label-primary); font-variant-numeric: tabular-nums;
 }
-@media (min-width: 720px) { .gauge-center { font-size: 17px; } }
-.gauge-name {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--label-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
+@media (min-width: 720px) { .gauge-center { font-size: 18px; } }
+.gauge-name { font-size: 12px; font-weight: 600; color: var(--label-secondary); text-transform: uppercase; letter-spacing: 0.04em; }
 
-/* ===========================
-   List Rows (iOS style)
-   =========================== */
+/* ===== List Rows ===== */
 .row {
-  display: flex;
-  align-items: center;
-  padding: 11px 16px;
-  min-height: 44px;
-  gap: 12px;
-  -webkit-tap-highlight-color: transparent;
-  position: relative;
-  transition: background 0.08s ease;
+  display: flex; align-items: center; padding: 12px 16px; min-height: 48px; gap: 14px;
+  -webkit-tap-highlight-color: transparent; position: relative; transition: background 0.12s ease; cursor: pointer;
 }
 .row:active { background: var(--fill-tertiary); }
 .row + .row::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 56px;
-  right: 0;
-  height: 0.5px;
-  background: var(--separator);
+  content: ''; position: absolute; top: 0; left: 58px; right: 0;
+  height: 0.33px; background: var(--separator);
 }
 .row-icon {
-  width: 30px;
-  height: 30px;
-  border-radius: 7px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
+  width: 32px; height: 32px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
-.row-icon svg { width: 15px; height: 15px; color: #fff; stroke-width: 2; }
+.row-icon svg { width: 16px; height: 16px; color: #fff; stroke-width: 2; }
 .row-body { flex: 1; min-width: 0; }
-.row-title {
-  font-size: 15px;
-  font-weight: 400;
-  color: var(--label-primary);
-  letter-spacing: -0.2px;
-}
-.row-caption {
-  font-size: 12px;
-  color: var(--label-tertiary);
-  margin-top: 1px;
-}
+.row-title { font-size: 16px; font-weight: 400; color: var(--label-primary); letter-spacing: -0.2px; }
+.row-caption { font-size: 12px; color: var(--label-tertiary); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .row-end {
-  font-size: 15px;
-  font-weight: 400;
-  color: var(--label-secondary);
-  flex-shrink: 0;
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: -0.2px;
+  font-size: 15px; font-weight: 400; color: var(--label-secondary); flex-shrink: 0;
+  text-align: right; font-variant-numeric: tabular-nums; letter-spacing: -0.2px;
+  max-width: 45%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.row-end.mono {
-  font-family: 'SF Mono', 'Menlo', 'Consolas', ui-monospace, monospace;
-  font-size: 14px;
-}
+.row-end.mono { font-family: 'SF Mono', 'Menlo', 'Consolas', ui-monospace, monospace; font-size: 14px; }
 
-/* ===========================
-   Stats Grid
-   =========================== */
+/* ===== Status Pill ===== */
+.status-pill {
+  padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600;
+  display: flex; align-items: center; gap: 6px; line-height: 1.2; transition: all 0.3s ease;
+}
+.status-pill.running { background: var(--green-soft); color: var(--green); }
+.status-pill.stopped { background: var(--red-soft); color: var(--red); }
+.status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+/* ===== Gateway Buttons ===== */
+.gw-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; padding: 16px; }
+.gw-btn {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+  background: var(--bg-secondary); border: 1px solid var(--separator); border-radius: 14px; padding: 16px 8px;
+  cursor: pointer; transition: transform 0.15s var(--ease-spring), background 0.3s, border-color 0.3s, box-shadow 0.3s;
+  color: var(--label-primary); font-weight: 600; font-size: 13px;
+  -webkit-tap-highlight-color: transparent; position: relative; overflow: hidden;
+}
+.gw-btn:active { transform: scale(0.94); }
+.gw-btn.gw-active { border-color: var(--green); box-shadow: 0 0 0 1px var(--green), 0 2px 12px rgba(52,199,89,0.15); }
+.gw-btn.gw-loading { pointer-events: none; }
+.gw-btn.gw-loading::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+  animation: gw-shimmer 1.2s ease infinite;
+}
+@keyframes gw-shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+.gw-icon {
+  width: 36px; height: 36px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; color: #fff;
+  transition: transform 0.3s var(--ease-spring);
+}
+.gw-icon svg { width: 16px; height: 16px; stroke-width: 2.5; }
+.gw-status-text {
+  font-size: 10px; font-weight: 500; color: var(--label-tertiary);
+  margin-top: 2px; transition: color 0.3s;
+}
+.gw-status-text.success { color: var(--green); }
+.gw-status-text.error { color: var(--red); }
+
+/* ===== Stats Grid ===== */
 .stat-grid { display: grid; grid-template-columns: 1fr 1fr; }
-.stat-cell {
-  padding: 16px;
-  text-align: center;
-  position: relative;
-}
+.stat-cell { padding: 18px 16px; text-align: center; position: relative; }
 .stat-cell:nth-child(odd)::after {
-  content: '';
-  position: absolute;
-  top: 12px; bottom: 12px; right: 0;
-  width: 0.5px;
-  background: var(--separator);
+  content: ''; position: absolute; top: 14px; bottom: 14px; right: 0;
+  width: 0.33px; background: var(--separator);
 }
-.stat-cell:nth-child(1), .stat-cell:nth-child(2) {
-  border-bottom: 0.5px solid var(--separator);
-}
+.stat-cell:nth-child(1), .stat-cell:nth-child(2) { border-bottom: 0.33px solid var(--separator); }
 .stat-num {
-  font-size: 28px;
-  font-weight: 700;
-  letter-spacing: -0.8px;
-  color: var(--label-primary);
-  font-variant-numeric: tabular-nums;
-  line-height: 1.1;
+  font-size: 30px; font-weight: 700; letter-spacing: -1px;
+  color: var(--label-primary); font-variant-numeric: tabular-nums; line-height: 1.1;
 }
-.stat-name {
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--label-secondary);
-  margin-top: 4px;
-  letter-spacing: -0.1px;
-}
+.stat-name { font-size: 12px; font-weight: 500; color: var(--label-secondary); margin-top: 4px; letter-spacing: -0.1px; }
 
-/* ===========================
-   Channel Badge Row
-   =========================== */
+/* ===== Channel Badge Row ===== */
 .ch-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  min-height: 44px;
-  position: relative;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 13px 16px; min-height: 48px; position: relative; -webkit-tap-highlight-color: transparent;
 }
 .ch-row + .ch-row::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 16px; right: 16px;
-  height: 0.5px;
-  background: var(--separator);
+  content: ''; position: absolute; top: 0; left: 16px; right: 16px;
+  height: 0.33px; background: var(--separator);
 }
-.ch-left { display: flex; align-items: center; gap: 10px; }
+.ch-left { display: flex; align-items: center; gap: 12px; }
 .ch-dot { width: 8px; height: 8px; border-radius: 50%; transition: background 0.3s ease; }
-.ch-label { font-size: 15px; color: var(--label-primary); letter-spacing: -0.2px; }
+.ch-label { font-size: 15px; color: var(--label-primary); letter-spacing: -0.2px; font-weight: 500; }
 .ch-badge {
-  padding: 3px 10px;
-  border-radius: 100px;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
+  padding: 4px 12px; border-radius: 100px; font-size: 12px; font-weight: 600;
+  letter-spacing: 0.02em; transition: all 0.3s ease;
 }
 
-/* ===========================
-   Error State
-   =========================== */
-.error-card { padding: 24px 20px; }
-.error-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  margin-bottom: 16px;
+/* ===== Schedule Row ===== */
+.sched-row {
+  display: flex; align-items: flex-start; padding: 14px 16px; gap: 14px;
+  position: relative; -webkit-tap-highlight-color: transparent;
 }
+.sched-row + .sched-row::before {
+  content: ''; position: absolute; top: 0; left: 58px; right: 0;
+  height: 0.33px; background: var(--separator);
+}
+.sched-body { flex: 1; min-width: 0; }
+.sched-title { font-size: 15px; font-weight: 500; color: var(--label-primary); letter-spacing: -0.2px; }
+.sched-expr {
+  font-family: 'SF Mono', 'Menlo', 'Consolas', ui-monospace, monospace;
+  font-size: 12px; color: var(--tint); background: var(--tint-soft);
+  padding: 2px 8px; border-radius: 6px; display: inline-block; margin-top: 4px;
+}
+.sched-cmd {
+  font-size: 12px; color: var(--label-tertiary); margin-top: 4px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.sched-status {
+  flex-shrink: 0; padding: 4px 10px; border-radius: 100px;
+  font-size: 11px; font-weight: 600; margin-top: 2px;
+}
+
+/* ===== Error State ===== */
+.error-card { padding: 24px 20px; }
+.error-row { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 20px; }
 .error-badge {
-  width: 34px; height: 34px;
-  border-radius: 50%;
-  background: var(--red-soft);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
+  width: 36px; height: 36px; border-radius: 50%; background: var(--red-soft);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
 .error-badge svg { width: 18px; height: 18px; color: var(--red); stroke-width: 2; }
-.error-title { font-size: 15px; font-weight: 600; color: var(--label-primary); margin-bottom: 2px; }
-.error-msg { font-size: 13px; color: var(--label-secondary); line-height: 1.4; }
+.error-title { font-size: 16px; font-weight: 600; color: var(--label-primary); margin-bottom: 2px; }
+.error-msg { font-size: 14px; color: var(--label-secondary); line-height: 1.5; }
 .btn-primary {
-  width: 100%;
-  padding: 12px 20px;
-  border-radius: 12px;
-  border: none;
-  background: var(--tint);
-  color: #fff;
-  font-size: 16px;
-  font-weight: 600;
-  letter-spacing: -0.2px;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  transition: transform 0.1s ease, opacity 0.1s ease;
+  width: 100%; padding: 14px 20px; border-radius: 14px; border: none;
+  background: var(--tint); color: #fff; font-size: 17px; font-weight: 600; letter-spacing: -0.2px;
+  cursor: pointer; -webkit-tap-highlight-color: transparent;
+  transition: transform 0.15s var(--ease-spring), opacity 0.15s ease;
 }
-.btn-primary:active { transform: scale(0.97); opacity: 0.8; }
+.btn-primary:active { transform: scale(0.97); opacity: 0.85; }
 
-/* ===========================
-   Placeholder / Empty
-   =========================== */
-.placeholder { text-align: center; padding: 36px 20px; }
+/* ===== Placeholder ===== */
+.placeholder { text-align: center; padding: 40px 20px; }
 .placeholder-icon {
-  width: 52px; height: 52px;
-  border-radius: 16px;
-  background: var(--fill-tertiary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 14px;
+  width: 56px; height: 56px; border-radius: 16px; background: var(--fill-tertiary);
+  display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;
 }
 .placeholder-icon svg { width: 24px; height: 24px; color: var(--label-tertiary); stroke-width: 1.8; }
-.placeholder-title {
-  font-size: 16px; font-weight: 600;
-  color: var(--label-primary);
-  margin-bottom: 4px;
-  letter-spacing: -0.2px;
-}
-.placeholder-sub {
-  font-size: 14px;
-  color: var(--label-secondary);
-  line-height: 1.45;
-  letter-spacing: -0.1px;
-}
+.placeholder-title { font-size: 17px; font-weight: 600; color: var(--label-primary); margin-bottom: 6px; letter-spacing: -0.3px; }
+.placeholder-sub { font-size: 14px; color: var(--label-secondary); line-height: 1.5; letter-spacing: -0.1px; }
 
-/* ===========================
-   Skeleton
-   =========================== */
-@keyframes shimmer {
-  0% { background-position: -300% 0; }
-  100% { background-position: 300% 0; }
-}
+/* ===== Skeleton ===== */
+@keyframes shimmer { 0% { background-position: -300% 0; } 100% { background-position: 300% 0; } }
 .skel {
   background: linear-gradient(90deg, var(--fill-tertiary) 0%, var(--fill-secondary) 40%, var(--fill-tertiary) 80%);
-  background-size: 300% 100%;
-  animation: shimmer 1.8s ease infinite;
-  border-radius: 6px;
+  background-size: 300% 100%; animation: shimmer 1.6s ease infinite; border-radius: 8px;
 }
 
-/* ===========================
-   Bottom Tab Bar
-   =========================== */
+/* ===== Bottom Tab Bar ===== */
 .tab-bar {
-  position: fixed;
-  bottom: 0; left: 0; right: 0;
-  z-index: 100;
-  background: var(--nav-blur);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border-top: 0.5px solid var(--separator);
-  padding-bottom: env(safe-area-inset-bottom, 0);
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+  background: var(--nav-blur); backdrop-filter: blur(28px) saturate(200%);
+  -webkit-backdrop-filter: blur(28px) saturate(200%);
+  border-top: 0.33px solid var(--separator);
+  padding-bottom: env(safe-area-inset-bottom, 0); transition: background 0.3s ease;
 }
-.tab-bar-row {
-  display: flex;
-  max-width: 720px;
-  margin: 0 auto;
-}
+.tab-bar-row { display: flex; max-width: 720px; margin: 0 auto; }
 .tab-btn {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  padding: 7px 0 5px;
-  border: none;
-  background: none;
-  cursor: pointer;
-  color: var(--label-tertiary);
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0.01em;
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 2px; padding: 8px 0 6px; border: none; background: none; cursor: pointer;
+  color: var(--label-tertiary); font-size: 10px; font-weight: 500; letter-spacing: 0.01em;
   -webkit-tap-highlight-color: transparent;
-  transition: color 0.15s ease;
-  position: relative;
+  transition: color 0.2s ease, transform 0.15s var(--ease-spring); position: relative;
 }
-.tab-btn svg {
-  width: 22px; height: 22px;
-  stroke-width: 1.6;
-  transition: color 0.15s ease;
-}
+.tab-btn svg { width: 24px; height: 24px; stroke-width: 1.6; transition: color 0.2s ease, transform 0.2s var(--ease-spring); }
 .tab-btn.active { color: var(--tint); font-weight: 600; }
-.tab-btn:active { opacity: 0.5; }
-.tab-btn.active::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 20px;
-  height: 2px;
-  border-radius: 1px;
-  background: var(--tint);
-}
+.tab-btn.active svg { transform: scale(1.05); }
+.tab-btn:active { transform: scale(0.88); }
 
-/* ===========================
-   Panels
-   =========================== */
+/* ===== Panels ===== */
 .panel { display: none; }
 .panel.active { display: block; opacity: 1; }
 
-/* ===========================
-   Info Page Styles
-   =========================== */
-.info-header {
-  height: 110px;
-  background: linear-gradient(135deg, var(--tint-soft) 0%, var(--purple-soft) 100%);
-  position: relative;
-  border-radius: var(--radius) var(--radius) 0 0;
-}
-.info-header-brand {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  opacity: 0.08;
-  font-size: 42px;
-  font-weight: 900;
-  letter-spacing: -2px;
-  color: var(--label-primary);
-  pointer-events: none;
-  user-select: none;
-  white-space: nowrap;
-}
-.info-avatar-wrap {
-  position: absolute;
-  bottom: 0;
-  left: 24px;
-  transform: translateY(50%);
-  z-index: 2;
-}
+/* ===== Info Page ===== */
+.info-profile-card { display: flex; flex-direction: column; align-items: center; padding: 32px 20px 28px; }
 .info-avatar {
-  width: 72px;
-  height: 72px;
-  border-radius: 18px;
-  background: var(--tint);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 26px;
-  font-weight: 800;
-  color: #fff;
-  border: 3.5px solid var(--bg-elevated);
-  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  width: 84px; height: 84px; border-radius: 50%;
+  background: linear-gradient(145deg, var(--tint), var(--indigo));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 32px; font-weight: 800; color: #fff;
+  box-shadow: 0 4px 20px rgba(0,122,255,0.2); margin-bottom: 16px;
+  transition: transform 0.3s var(--ease-spring);
 }
-.info-body {
-  padding: 48px 24px 24px;
-}
-.info-name {
-  font-size: 22px;
-  font-weight: 800;
-  letter-spacing: -0.5px;
-  color: var(--label-primary);
-  line-height: 1.2;
-}
-.info-name-sub {
-  font-size: 14px;
-  font-weight: 400;
-  color: var(--label-secondary);
-  margin-left: 4px;
-}
-.info-role {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--tint);
-  margin-top: 2px;
-}
-.info-social {
-  display: flex;
-  gap: 8px;
-  margin-top: 12px;
-}
+.info-avatar:active { transform: scale(0.92); }
+.info-name { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; color: var(--label-primary); }
+.info-sub { font-size: 14px; color: var(--label-secondary); margin-top: 4px; }
+.info-social { display: flex; gap: 10px; margin-top: 18px; }
 .info-social-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: var(--fill-tertiary);
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  color: var(--label-primary);
+  width: 40px; height: 40px; border-radius: 50%;
+  background: var(--fill-tertiary); border: none;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: var(--label-primary);
   -webkit-tap-highlight-color: transparent;
-  transition: background 0.15s ease, transform 0.1s ease;
+  transition: background 0.2s ease, transform 0.15s var(--ease-spring);
 }
 .info-social-btn:hover { background: var(--tint-soft); color: var(--tint); }
-.info-social-btn:active { transform: scale(0.9); }
-.info-social-btn svg { width: 16px; height: 16px; }
-.info-about {
-  background: var(--fill-tertiary);
-  border-radius: 12px;
-  padding: 16px;
-  margin-top: 16px;
+.info-social-btn:active { transform: scale(0.85); }
+.info-social-btn svg { width: 18px; height: 18px; }
+
+/* ===== Modal ===== */
+.modal-backdrop {
+  position: fixed; inset: 0; z-index: 3000;
+  background: rgba(0,0,0,0.35); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  display: flex; align-items: center; justify-content: center; padding: 24px;
 }
-.info-about-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
+.modal {
+  background: var(--bg-elevated); border-radius: 20px;
+  padding: 28px 24px 24px; width: 100%; max-width: 320px;
+  text-align: center; box-shadow: 0 24px 48px rgba(0,0,0,0.2); transform: translateZ(0);
 }
-.info-about-icon {
-  width: 28px;
-  height: 28px;
-  border-radius: 7px;
-  background: var(--tint-soft);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.modal-icon {
+  width: 52px; height: 52px; border-radius: 14px;
+  background: var(--tint-soft); color: var(--tint);
+  display: flex; align-items: center; justify-content: center; margin: 0 auto 18px;
 }
-.info-about-icon svg { width: 14px; height: 14px; color: var(--tint); }
-.info-about-label {
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--label-secondary);
+.modal-icon svg { width: 24px; height: 24px; }
+.modal-title { font-size: 18px; font-weight: 700; margin-bottom: 8px; color: var(--label-primary); letter-spacing: -0.3px; }
+.modal-text { font-size: 15px; color: var(--label-secondary); margin-bottom: 4px; line-height: 1.45; }
+.modal-text-sub { font-size: 13px; color: var(--label-tertiary); margin-bottom: 2px; }
+.modal .btn-primary { margin-top: 20px; }
+
+/* ===== Small Button ===== */
+.btn-sm {
+  padding: 7px 14px; border-radius: 100px; border: none;
+  background: var(--tint-soft); color: var(--tint);
+  font-size: 13px; font-weight: 600; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.15s var(--ease-spring), opacity 0.15s ease;
 }
-.info-about-text {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--label-primary);
-  line-height: 1.5;
-  letter-spacing: -0.1px;
+.btn-sm:active { transform: scale(0.92); opacity: 0.8; }
+
+/* ===== Toast ===== */
+.toast-container {
+  position: fixed; top: calc(env(safe-area-inset-top, 0px) + 60px);
+  left: 50%; transform: translateX(-50%);
+  z-index: 2000; display: flex; flex-direction: column; gap: 8px; pointer-events: none;
+  width: calc(100% - 32px); max-width: 400px;
 }
-.info-about-desc {
-  font-size: 12px;
-  color: var(--label-secondary);
-  line-height: 1.5;
-  margin-top: 6px;
+.toast {
+  background: var(--bg-elevated); border: 0.33px solid var(--separator);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.1), 0 2px 8px rgba(0,0,0,0.06);
+  border-radius: 16px; padding: 12px 16px;
+  display: flex; align-items: center; gap: 12px;
+  pointer-events: auto; font-size: 14px; font-weight: 500; color: var(--label-primary);
 }
-.info-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 16px;
+.toast-btn {
+  background: var(--tint); color: #fff; border: none; border-radius: 99px;
+  padding: 6px 14px; font-size: 13px; font-weight: 600; cursor: pointer;
+  -webkit-tap-highlight-color: transparent; transition: transform 0.15s var(--ease-spring); flex-shrink: 0;
 }
-.info-meta-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: var(--fill-tertiary);
-  padding: 6px 12px;
-  border-radius: 100px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--label-primary);
+.toast-btn:active { transform: scale(0.92); }
+
+/* ===== Update Dot ===== */
+.updating-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--tint); display: inline-block; animation: pulse-dot 1s ease-in-out infinite; }
+
+/* ===== Chat Overlay ===== */
+.chat-overlay {
+  position: fixed; inset: 0; z-index: 5000;
+  background: var(--bg-primary); display: flex; flex-direction: column;
 }
-.info-meta-item svg { width: 13px; height: 13px; color: var(--label-secondary); }
-.info-meta-badge {
-  padding: 2px 8px;
-  border-radius: 100px;
-  font-size: 10px;
-  font-weight: 700;
-  border: 1px solid var(--tint-soft);
-  color: var(--tint);
-  letter-spacing: 0.04em;
+.chat-content {
+  flex: 1; overflow-y: auto; padding: 16px 16px 80px;
+  display: flex; flex-direction: column; gap: 4px;
+  -webkit-overflow-scrolling: touch;
 }
-.info-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 20px;
-  padding-top: 16px;
-  border-top: 0.5px solid var(--separator);
+/* Chat message group */
+.chat-msg-group { display: flex; flex-direction: column; gap: 2px; margin-bottom: 8px; }
+.chat-msg-group.user { align-items: flex-end; }
+.chat-msg-group.bot { align-items: flex-start; }
+
+.chat-bubble {
+  padding: 11px 16px; border-radius: 20px; max-width: 82%;
+  font-size: 16px; line-height: 1.45; word-break: break-word;
+  animation: bubble-in 0.25s var(--ease-spring);
+  position: relative;
+  -webkit-user-select: text; user-select: text;
 }
-.info-footer-brand {
-  font-size: 13px;
-  font-weight: 800;
-  letter-spacing: -0.4px;
-  color: var(--label-primary);
+@keyframes bubble-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
-.info-footer-ver {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
+.chat-bubble.user {
+  background: var(--tint); color: #fff;
+  border-bottom-right-radius: 6px;
 }
-.info-footer-ver-label {
-  font-size: 9px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--label-tertiary);
-}
-.info-footer-ver-val {
-  font-size: 12px;
-  font-family: 'SF Mono', 'Menlo', 'Consolas', ui-monospace, monospace;
-  font-weight: 600;
-  background: var(--fill-tertiary);
-  padding: 3px 10px;
-  border-radius: 6px;
-  margin-top: 3px;
-  color: var(--label-primary);
+.chat-bubble.bot {
+  background: var(--bg-elevated); color: var(--label-primary);
+  border-bottom-left-radius: 6px; box-shadow: var(--card-shadow);
 }
 
-/* ===========================
-   Utility
-   =========================== */
+/* Chat message actions */
+.chat-msg-actions {
+  display: flex; align-items: center; gap: 2px; padding: 4px 4px 0;
+  opacity: 0.7; transition: opacity 0.2s;
+}
+.chat-msg-actions:active { opacity: 1; }
+.chat-action-btn {
+  width: 30px; height: 30px; border-radius: 50%; border: none; background: transparent;
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
+  color: var(--label-tertiary); -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s, color 0.15s, transform 0.15s var(--ease-spring);
+}
+.chat-action-btn:active { transform: scale(0.8); background: var(--fill-tertiary); }
+.chat-action-btn svg { width: 14px; height: 14px; stroke-width: 2; }
+.chat-action-btn.copied { color: var(--green); }
+.chat-meta {
+  font-size: 11px; color: var(--label-tertiary); padding: 2px 4px 0;
+  display: flex; align-items: center; gap: 8px; font-variant-numeric: tabular-nums;
+}
+.chat-meta-detail {
+  display: flex; flex-direction: column; gap: 2px;
+  padding: 8px 12px; margin: 4px 0; border-radius: 10px;
+  background: var(--fill-tertiary); font-size: 12px; color: var(--label-secondary);
+}
+.chat-meta-detail span { display: flex; justify-content: space-between; gap: 12px; }
+.chat-meta-detail strong { color: var(--label-primary); font-weight: 600; }
+
+/* Chat input bar */
+.chat-input-bar {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 5001;
+  padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0));
+  background: var(--bg-elevated); border-top: 0.33px solid var(--separator);
+  display: flex; gap: 10px; align-items: flex-end;
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+}
+.chat-text-input {
+  flex: 1; background: var(--fill-tertiary); border: none; border-radius: 22px;
+  padding: 10px 18px; min-height: 44px; max-height: 120px; font-size: 16px; color: var(--label-primary);
+  outline: none; font-family: inherit; -webkit-appearance: none; resize: none; line-height: 1.4;
+  overflow-y: auto;
+}
+.chat-text-input::placeholder { color: var(--label-tertiary); }
+.chat-send-btn {
+  width: 44px; height: 44px; border-radius: 50%; border: none;
+  background: var(--tint); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; -webkit-tap-highlight-color: transparent;
+  transition: transform 0.15s var(--ease-spring); flex-shrink: 0;
+}
+.chat-send-btn:active { transform: scale(0.85); }
+.chat-send-btn svg { width: 18px; height: 18px; }
+
+/* Edit inline */
+.chat-edit-wrap {
+  display: flex; gap: 8px; align-items: center; margin-top: 6px; animation: bubble-in 0.2s var(--ease-spring);
+}
+.chat-edit-input {
+  flex: 1; background: var(--fill-tertiary); border: 1px solid var(--separator); border-radius: 12px;
+  padding: 8px 14px; font-size: 14px; color: var(--label-primary); outline: none; font-family: inherit;
+  -webkit-appearance: none;
+}
+.chat-edit-btn {
+  padding: 6px 12px; border-radius: 100px; border: none; font-size: 13px; font-weight: 600;
+  cursor: pointer; -webkit-tap-highlight-color: transparent; transition: transform 0.15s var(--ease-spring);
+}
+.chat-edit-btn:active { transform: scale(0.9); }
+.chat-edit-btn.save { background: var(--tint); color: #fff; }
+.chat-edit-btn.cancel { background: var(--fill-tertiary); color: var(--label-secondary); }
+
+/* ===== Saved chats panel ===== */
+.saved-panel {
+  position: fixed; inset: 0; z-index: 5500;
+  background: var(--bg-primary); display: flex; flex-direction: column;
+}
+.saved-content {
+  flex: 1; overflow-y: auto; padding: 8px 16px calc(40px + env(safe-area-inset-bottom, 0));
+  -webkit-overflow-scrolling: touch;
+}
+.saved-item {
+  background: var(--bg-elevated); border-radius: 14px; padding: 14px 16px;
+  margin-bottom: 10px; box-shadow: var(--card-shadow);
+  -webkit-tap-highlight-color: transparent; transition: background 0.12s ease; cursor: pointer;
+}
+.saved-item:active { background: var(--fill-tertiary); }
+.saved-item-title { font-size: 15px; font-weight: 600; color: var(--label-primary); margin-bottom: 4px; }
+.saved-item-sub { font-size: 13px; color: var(--label-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.saved-item-meta { font-size: 11px; color: var(--label-tertiary); margin-top: 6px; display: flex; gap: 12px; }
+
+/* ===== Model name truncation ===== */
+.model-name-truncate {
+  display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%;
+}
+
+/* ===== Think Block ===== */
+.think-block {
+  margin-bottom: 8px; border: 1px solid var(--separator); border-radius: 8px; overflow: hidden;
+  background: rgba(120, 120, 128, 0.05);
+}
+.think-block summary {
+  padding: 6px 12px; font-size: 12px; font-weight: 600; cursor: pointer;
+  user-select: none; opacity: 0.7; color: var(--label-secondary);
+  display: flex; align-items: center; gap: 4px;
+}
+.think-block summary:hover { opacity: 1; }
+.think-content {
+  padding: 8px 12px; font-size: 13px; opacity: 0.9; white-space: pre-wrap;
+  border-top: 1px solid var(--separator); color: var(--label-primary);
+  font-family: 'SF Mono', 'Menlo', 'Consolas', ui-monospace, monospace;
+}
+
+/* ===== Utility ===== */
 .hidden { display: none !important; }
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 ::-webkit-scrollbar { width: 0; height: 0; }
-.pressable { transition: transform 0.1s ease; }
-.pressable:active { transform: scale(0.97); }
+html.dark .session-icon-bg { background: #000 !important; }
 
-/* ===========================
-   Update indicator (inline)
-   =========================== */
-.updating-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--tint);
-  display: inline-block;
-  margin-left: 6px;
-  vertical-align: middle;
-  animation: pulse-dot 1s ease-in-out infinite;
-}
-
-  /* ===========================
-     Toast / Notification
-     =========================== */
-  .toast-container {
-    position: fixed;
-    bottom: calc(20px + env(safe-area-inset-bottom));
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 2000;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    pointer-events: none;
-  }
-  .toast {
-    background: var(--bg-elevated);
-    border: 0.5px solid var(--separator);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    border-radius: 999px;
-    padding: 10px 16px 10px 14px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    pointer-events: auto;
-    max-width: 90vw;
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--label-primary);
-  }
-  .toast-btn {
-    background: var(--tint);
-    color: #fff;
-    border: none;
-    border-radius: 99px;
-    padding: 4px 10px;
-    font-size: 12px;
-    font-weight: 600;
-    cursor: pointer;
-  }
+@keyframes card-enter { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+.card-animate { animation: card-enter 0.4s var(--spring) both; }
+.card-animate:nth-child(1) { animation-delay: 0s; }
+.card-animate:nth-child(2) { animation-delay: 0.05s; }
+.card-animate:nth-child(3) { animation-delay: 0.1s; }
+.card-animate:nth-child(4) { animation-delay: 0.15s; }
+.card-animate:nth-child(5) { animation-delay: 0.2s; }
+.card-animate:nth-child(6) { animation-delay: 0.25s; }
+.card-animate:nth-child(7) { animation-delay: 0.3s; }
+.card-animate:nth-child(8) { animation-delay: 0.35s; }
 </style>
 </head>
 
 <body x-data="app()" x-init="init()">
 
+<!-- Toast -->
 <div class="toast-container">
+  <template x-if="toastMsg">
+    <div class="toast" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 -translate-y-4 scale-95" x-transition:enter-end="opacity-100 translate-y-0 scale-100">
+      <i :data-lucide="toastIcon" style="width:20px;height:20px;flex-shrink:0;" :style="{color: toastColor}"></i>
+      <span style="flex:1;" x-text="toastMsg"></span>
+      <template x-if="toastAction">
+        <button class="toast-btn" @click="toastAction()">OK</button>
+      </template>
+    </div>
+  </template>
   <template x-if="updateAvailable">
-    <div class="toast" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
-      <i data-lucide="refresh-cw" class="w-4 h-4 text-tint"></i>
-      <span>更新が利用可能です</span>
-      <button class="toast-btn" @click="applyUpdate">更新</button>
+    <div class="toast" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 -translate-y-4 scale-95" x-transition:enter-end="opacity-100 translate-y-0 scale-100">
+      <i data-lucide="arrow-up-circle" style="width:20px;height:20px;color:var(--tint);flex-shrink:0;"></i>
+      <span style="flex:1;">Update available</span>
+      <button class="toast-btn" @click="applyUpdate">Update</button>
     </div>
   </template>
 </div>
 
-  <!-- ===== Top Bar ===== -->
-  <header class="top-bar">
-    <div class="top-bar-inner">
-      <span class="top-title">
-        Nanobot Console
-        <span class="updating-dot" x-show="updating" style="display:none;"></span>
-      </span>
-      <div class="top-actions">
-        <button class="icon-btn" @click="toggleTheme()" :aria-label="isDark ? 'Light' : 'Dark'">
-          <template x-if="!isDark"><i data-lucide="sun"></i></template>
-          <template x-if="isDark"><i data-lucide="moon"></i></template>
-        </button>
-        <button class="icon-btn" @click="checkForUpdate()" aria-label="Update">
-          <i data-lucide="download"></i>
-        </button>
-        <button class="icon-btn" @click="refresh()" aria-label="Refresh">
-          <i data-lucide="rotate-cw" :style="{ transform: 'rotate(' + refreshDeg + 'deg)', transition: 'transform 0.6s cubic-bezier(0.22,1,0.36,1)' }"></i>
-        </button>
+<!-- ===== Top Bar ===== -->
+<header class="top-bar">
+  <div class="top-bar-inner">
+    <span class="top-title">
+      Nanobot Console
+      <span class="updating-dot" x-show="updating" style="display:none;"></span>
+    </span>
+    <div class="top-actions">
+      <button class="icon-btn" @click="toggleTheme()" :aria-label="isDark ? 'Light' : 'Dark'">
+        <span x-show="!isDark"><i data-lucide="sun"></i></span>
+        <span x-show="isDark" style="display:none;"><i data-lucide="moon"></i></span>
+      </button>
+      <button class="icon-btn" @click="checkForUpdate()" aria-label="Update">
+        <i data-lucide="download"></i>
+      </button>
+      <button class="icon-btn" @click="refresh()" aria-label="Refresh">
+        <i data-lucide="rotate-cw" :style="{ transform: 'rotate(' + refreshDeg + 'deg)', transition: 'transform 0.6s cubic-bezier(0.22,1,0.36,1)' }"></i>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- ===== Content ===== -->
+<main class="content-area scroll-area">
+
+  <!-- Loading Skeleton -->
+  <template x-if="firstLoad">
+    <div>
+      <div class="card" style="margin-bottom:12px;">
+        <div style="padding:20px;display:flex;align-items:center;gap:16px;">
+          <div class="skel" style="width:54px;height:54px;border-radius:15px;flex-shrink:0;"></div>
+          <div style="flex:1;">
+            <div class="skel" style="height:16px;width:60%;margin-bottom:8px;border-radius:8px;"></div>
+            <div class="skel" style="height:12px;width:40%;border-radius:6px;"></div>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:12px;">
+        <div style="padding:28px;display:flex;justify-content:center;gap:40px;">
+          <div class="skel" style="width:88px;height:88px;border-radius:50%;"></div>
+          <div class="skel" style="width:88px;height:88px;border-radius:50%;"></div>
+        </div>
+      </div>
+      <div class="card">
+        <template x-for="i in 4"><div style="padding:14px 16px;display:flex;gap:14px;align-items:center;">
+          <div class="skel" style="width:32px;height:32px;border-radius:8px;flex-shrink:0;"></div>
+          <div class="skel" style="height:14px;flex:1;border-radius:7px;"></div>
+          <div class="skel" style="width:52px;height:14px;border-radius:7px;"></div>
+        </div></template>
       </div>
     </div>
-  </header>
+  </template>
 
-  <!-- ===== Content ===== -->
-  <main class="content-area">
-
-    <!-- Loading Skeleton (first load only) -->
-    <template x-if="firstLoad">
-      <div>
-        <div class="card" style="margin-bottom:12px;">
-          <div style="padding:20px;display:flex;align-items:center;gap:16px;">
-            <div class="skel" style="width:52px;height:52px;border-radius:14px;flex-shrink:0;"></div>
-            <div style="flex:1;">
-              <div class="skel" style="height:16px;width:60%;margin-bottom:8px;"></div>
-              <div class="skel" style="height:12px;width:40%;"></div>
-            </div>
-          </div>
-        </div>
-        <div class="card" style="margin-bottom:12px;">
-          <div style="padding:24px;display:flex;justify-content:center;gap:36px;">
-            <div class="skel" style="width:84px;height:84px;border-radius:50%;"></div>
-            <div class="skel" style="width:84px;height:84px;border-radius:50%;"></div>
-          </div>
-        </div>
-        <div class="card">
-          <template x-for="i in 3"><div style="padding:14px 16px;display:flex;gap:12px;align-items:center;">
-            <div class="skel" style="width:30px;height:30px;border-radius:7px;flex-shrink:0;"></div>
-            <div class="skel" style="height:14px;flex:1;"></div>
-            <div class="skel" style="width:48px;height:14px;"></div>
-          </div></template>
-        </div>
-      </div>
-    </template>
-
-    <!-- Error -->
-    <template x-if="error && !firstLoad">
-      <div class="card error-card">
-        <div class="error-row">
-          <div class="error-badge"><i data-lucide="alert-circle"></i></div>
-          <div>
-            <div class="error-title">Connection Error</div>
-            <div class="error-msg" x-text="error"></div>
-          </div>
-        </div>
-        <button class="btn-primary pressable" @click="fetchData()">Retry</button>
-      </div>
-    </template>
-
-    <!-- ===== Overview Tab ===== -->
-    <div class="panel" :class="{ active: tab === 'overview' }" x-ref="panelOverview">
-      <template x-if="data">
+  <!-- Error -->
+  <template x-if="error && !firstLoad">
+    <div class="card error-card card-animate">
+      <div class="error-row">
+        <div class="error-badge"><i data-lucide="alert-circle"></i></div>
         <div>
-          <!-- Status Hero -->
-          <div class="card" style="margin-bottom:12px;">
-            <div class="hero">
-              <div class="hero-icon" :style="{ background: data.process.running ? 'var(--green-soft)' : 'var(--red-soft)' }">
-                <i data-lucide="bot" :style="{ color: data.process.running ? 'var(--green)' : 'var(--red)' }"></i>
-              </div>
-              <div class="hero-body">
-                <div class="hero-name">Nanobot Console</div>
-                <div class="hero-sub" x-text="'Last: ' + fmtTs(data.timestamp)"></div>
-              </div>
+          <div class="error-title">Connection Error</div>
+          <div class="error-msg" x-text="error"></div>
+        </div>
+      </div>
+      <button class="btn-primary" @click="fetchData()">Retry</button>
+    </div>
+  </template>
+
+  <!-- ===== Overview Tab ===== -->
+  <div class="panel" :class="{ active: tab === 'overview' }" x-ref="panelOverview">
+    <template x-if="data">
+      <div>
+        <!-- Status Hero -->
+        <div class="card card-animate" style="margin-bottom:12px;">
+          <div class="hero">
+            <div class="hero-icon" :style="{ background: data.gateway?.running ? 'var(--green-soft)' : 'var(--red-soft)' }">
+              <i data-lucide="bot" :style="{ color: data.gateway?.running ? 'var(--green)' : 'var(--red)' }"></i>
             </div>
-            <div class="hero-footer">
-              <span class="pill" :style="{ background: data.process.running ? 'var(--green-soft)' : 'var(--red-soft)', color: data.process.running ? 'var(--green)' : 'var(--red)' }">
-                <span class="pill-dot" :class="{ live: data.process.running }" :style="{ background: data.process.running ? 'var(--green)' : 'var(--red)' }"></span>
-                <span x-text="data.process.running ? 'Running' : 'Stopped'"></span>
-              </span>
-              <span class="ts-label" x-text="tailscaleLabel()"></span>
+            <div class="hero-body">
+              <div class="hero-name">Nanobot Console</div>
+              <div class="hero-sub" x-text="'Last: ' + fmtTs(data.app_info?.last_updated || Date.now())"></div>
             </div>
           </div>
+          <div class="hero-footer">
+            <span class="pill" :style="{ background: data.gateway?.running ? 'var(--green-soft)' : 'var(--red-soft)', color: data.gateway?.running ? 'var(--green)' : 'var(--red)' }">
+              <span class="pill-dot" :class="{ live: data.gateway?.running }" :style="{ background: data.gateway?.running ? 'var(--green)' : 'var(--red)' }"></span>
+              <span x-text="data.gateway?.running ? 'Running' : 'Stopped'"></span>
+            </span>
+            <span class="ts-label" x-text="tailscaleLabel()"></span>
+          </div>
+        </div>
 
-          <!-- Gauges -->
-          <template x-if="data.process.running">
-            <div class="card" style="margin-bottom:12px;">
-              <div class="gauges">
-                <div class="gauge">
-                  <div class="gauge-ring-wrap">
-                    <svg viewBox="0 0 80 80">
-                      <circle class="gauge-track" cx="40" cy="40" r="34"/>
-                      <circle class="gauge-value" cx="40" cy="40" r="34"
-                        :stroke="cpuColor(data.process.cpu_percent)"
-                        stroke-dasharray="213.63"
-                        :stroke-dashoffset="213.63 - (clamp(data.process.cpu_percent, 0, 100) / 100) * 213.63"
-                      />
-                    </svg>
-                    <span class="gauge-center" x-text="data.process.cpu_percent.toFixed(1) + '%'"></span>
-                  </div>
-                  <span class="gauge-name">CPU</span>
+        <!-- Gauges -->
+        <template x-if="data.process.running">
+          <div class="card card-animate" style="margin-bottom:12px;">
+            <div class="gauges">
+              <div class="gauge">
+                <div class="gauge-ring-wrap">
+                  <svg viewBox="0 0 80 80">
+                    <circle class="gauge-track" cx="40" cy="40" r="34"/>
+                    <circle class="gauge-value" cx="40" cy="40" r="34"
+                      :stroke="cpuColor(data.process.cpu_percent)"
+                      stroke-dasharray="213.63"
+                      :stroke-dashoffset="213.63 - (clamp(data.process.cpu_percent, 0, 100) / 100) * 213.63"
+                    />
+                  </svg>
+                  <span class="gauge-center" x-text="data.process.cpu_percent.toFixed(1) + '%'"></span>
                 </div>
-                <div class="gauge">
-                  <div class="gauge-ring-wrap">
-                    <svg viewBox="0 0 80 80">
-                      <circle class="gauge-track" cx="40" cy="40" r="34"/>
-                      <circle class="gauge-value" cx="40" cy="40" r="34"
-                        :stroke="memColor(memPercent(data.process.memory_percent))"
-                        stroke-dasharray="213.63"
-                        :stroke-dashoffset="213.63 - (memPercent(data.process.memory_percent) / 100) * 213.63"
-                      />
-                    </svg>
-                    <span class="gauge-center" x-text="fmtMem(data.process.memory_mb)"></span>
-                  </div>
-                  <span class="gauge-name">Memory</span>
+                <span class="gauge-name">CPU</span>
+              </div>
+              <div class="gauge">
+                <div class="gauge-ring-wrap">
+                  <svg viewBox="0 0 80 80">
+                    <circle class="gauge-track" cx="40" cy="40" r="34"/>
+                    <circle class="gauge-value" cx="40" cy="40" r="34"
+                      :stroke="memColor(memPercent(data.process.memory_percent))"
+                      stroke-dasharray="213.63"
+                      :stroke-dashoffset="213.63 - (memPercent(data.process.memory_percent) / 100) * 213.63"
+                    />
+                  </svg>
+                  <span class="gauge-center" x-text="fmtMem(data.process.memory_mb)"></span>
                 </div>
+                <span class="gauge-name">Memory</span>
               </div>
             </div>
-          </template>
+          </div>
+        </template>
 
-          <!-- Process Info -->
-          <template x-if="data.process.running">
-            <div>
-              <div class="section-label">Process</div>
-              <div class="card">
-                <div class="row">
-                  <div class="row-icon" style="background:#5856D6;"><i data-lucide="hash"></i></div>
-                  <span class="row-title">PID</span>
-                  <span class="row-end mono" x-text="data.process.pid || 'N/A'"></span>
-                </div>
-                <div class="row">
-                  <div class="row-icon" :style="{ background: cpuColor(data.process.cpu_percent) }"><i data-lucide="cpu"></i></div>
-                  <span class="row-title">CPU</span>
-                  <span class="row-end" :style="{ color: cpuColor(data.process.cpu_percent) }" x-text="data.process.cpu_percent.toFixed(1) + '%'"></span>
-                </div>
-                <div class="row">
-                  <div class="row-icon" :style="{ background: memColor(memPercent(data.process.memory_percent)) }"><i data-lucide="database"></i></div>
-                  <span class="row-title">Memory</span>
-                  <span class="row-end" :style="{ color: memColor(memPercent(data.process.memory_percent)) }" x-text="fmtMem(data.process.memory_mb) + ' (' + (data.process.memory_percent?.toFixed(1) || '0.0') + '%)'"></span>
-                </div>
-                <div class="row">
-                  <div class="row-icon" style="background:var(--cyan);"><i data-lucide="clock"></i></div>
-                  <span class="row-title">Uptime</span>
-                  <span class="row-end" x-text="fmtUptime(data.process.uptime_seconds)"></span>
-                </div>
-              </div>
-            </div>
-          </template>
-
-          <!-- Stopped -->
-          <template x-if="!data.process.running">
+        <!-- Process Info -->
+        <template x-if="data.process.running">
+          <div class="card-animate">
+            <div class="section-label">Process</div>
             <div class="card">
-              <div class="placeholder">
-                <div class="placeholder-icon"><i data-lucide="power"></i></div>
-                <div class="placeholder-title">Process Stopped</div>
-                <div class="placeholder-sub">Nanobot is not running</div>
+              <div class="row">
+                <div class="row-icon" style="background:var(--indigo);"><i data-lucide="hash"></i></div>
+                <span class="row-title">PID</span>
+                <span class="row-end mono" x-text="data.process.pid || 'N/A'"></span>
+              </div>
+              <div class="row">
+                <div class="row-icon" :style="{ background: cpuColor(data.process.cpu_percent) }"><i data-lucide="cpu"></i></div>
+                <span class="row-title">CPU</span>
+                <span class="row-end" :style="{ color: cpuColor(data.process.cpu_percent) }" x-text="data.process.cpu_percent.toFixed(1) + '%'"></span>
+              </div>
+              <div class="row">
+                <div class="row-icon" :style="{ background: memColor(memPercent(data.process.memory_percent)) }"><i data-lucide="database"></i></div>
+                <span class="row-title">Memory</span>
+                <span class="row-end" :style="{ color: memColor(memPercent(data.process.memory_percent)) }" x-text="fmtMem(data.process.memory_mb) + ' (' + (data.process.memory_percent?.toFixed(1) || '0.0') + '%)'"></span>
+              </div>
+              <div class="row">
+                <div class="row-icon" style="background:var(--cyan);"><i data-lucide="clock"></i></div>
+                <span class="row-title">Uptime</span>
+                <span class="row-end" x-text="fmtUptime(data.process.uptime_seconds)"></span>
               </div>
             </div>
-          </template>
+          </div>
+        </template>
 
-          <!-- Stats -->
+        <!-- Stopped -->
+        <template x-if="!data.process.running">
+          <div class="card card-animate">
+            <div class="placeholder">
+              <div class="placeholder-icon"><i data-lucide="power"></i></div>
+              <div class="placeholder-title">Process Stopped</div>
+              <div class="placeholder-sub">Nanobot is not running</div>
+            </div>
+          </div>
+        </template>
+
+        <!-- Model Info -->
+        <div class="card-animate" x-show="data.config?.model">
+          <div class="card" style="margin-top:12px;">
+            <div class="row">
+              <div class="row-icon" style="background:var(--purple);"><i data-lucide="bot"></i></div>
+              <div class="row-body">
+                <div class="row-title">AI Model</div>
+                <div class="row-caption model-name-truncate" x-text="data.config?.model || 'Unknown'" :title="data.config?.model || ''"></div>
+              </div>
+              <button class="btn-sm" @click="openChat()">Test Chat</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Gateway Control (inline status, no popup) -->
+        <div class="card-animate">
+          <div class="section-label">Gateway Control</div>
+          <div class="card">
+            <div class="gw-grid">
+              <button class="gw-btn"
+                :class="{ 'gw-active': data.gateway?.running, 'gw-loading': gwLoading === 'start' }"
+                @click="controlGateway('start')"
+                :disabled="data.gateway?.running"
+                :style="{opacity: data.gateway?.running ? 0.4 : 1}">
+                <div class="gw-icon" style="background:var(--green);"><i data-lucide="play"></i></div>
+                <span>Start</span>
+                <div class="gw-status-text" :class="gwStatusClass('start')" x-text="gwStatusText('start')"></div>
+              </button>
+              <button class="gw-btn"
+                :class="{ 'gw-loading': gwLoading === 'stop' }"
+                @click="controlGateway('stop')"
+                :disabled="!data.gateway?.running"
+                :style="{opacity: !data.gateway?.running ? 0.4 : 1}">
+                <div class="gw-icon" style="background:var(--red);"><i data-lucide="square"></i></div>
+                <span>Stop</span>
+                <div class="gw-status-text" :class="gwStatusClass('stop')" x-text="gwStatusText('stop')"></div>
+              </button>
+              <button class="gw-btn"
+                :class="{ 'gw-loading': gwLoading === 'restart' }"
+                @click="controlGateway('restart')"
+                :disabled="!data.gateway?.running"
+                :style="{opacity: !data.gateway?.running ? 0.4 : 1}">
+                <div class="gw-icon" style="background:var(--orange);"><i data-lucide="refresh-cw"></i></div>
+                <span>Restart</span>
+                <div class="gw-status-text" :class="gwStatusClass('restart')" x-text="gwStatusText('restart')"></div>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tailscale -->
+        <div class="card-animate">
+          <div class="section-label">Tailscale</div>
+          <div class="card">
+            <div class="row">
+              <div class="row-icon" style="background:#000;"><img src="https://tailscale.com/favicon.ico" width="16" style="border-radius:50%;" alt=""></div>
+              <div class="row-body">
+                <div class="row-title">Tailscale</div>
+                <div class="row-caption" x-text="data.tailscale?.version || 'Unknown Version'"></div>
+              </div>
+              <div class="row-end">
+                <div class="status-pill" :class="(data.tailscale?.online || data.tailscale?.backend_state === 'Running') ? 'running' : 'stopped'">
+                  <div class="status-dot"></div>
+                  <span x-text="data.tailscale?.backend_state || (data.tailscale?.online ? 'Running' : 'Stopped')"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="card-animate">
           <div class="section-label">Stats</div>
           <div class="card">
             <div class="stat-grid">
@@ -1021,125 +917,181 @@ body {
             </div>
           </div>
         </div>
-      </template>
-    </div>
+      </div>
+    </template>
+  </div>
 
-    <!-- ===== Sessions Tab ===== -->
-    <div class="panel" :class="{ active: tab === 'sessions' }" x-ref="panelSessions">
-      <template x-if="data">
-        <div>
-          <div class="section-label" style="padding-top:4px;">Status</div>
-          <div class="card">
-            <div class="row">
-              <div class="row-icon" :style="{ background: sessColor() }">
-                <i data-lucide="activity"></i>
-              </div>
-              <div class="row-body">
-                <div class="row-title">Current State</div>
-                <div class="row-caption" x-text="sessLabel()"></div>
-              </div>
-              <span class="row-end" style="color:var(--tint);font-weight:600;" x-text="data.sessions.thinking_sessions || 0"></span>
+  <!-- ===== Sessions Tab ===== -->
+  <div class="panel" :class="{ active: tab === 'sessions' }" x-ref="panelSessions">
+    <template x-if="data">
+      <div>
+        <div class="section-label" style="padding-top:8px;">Status</div>
+        <div class="card card-animate">
+          <div class="row">
+            <div class="row-icon" :style="{ background: sessColor() }"><i data-lucide="activity"></i></div>
+            <div class="row-body">
+              <div class="row-title">Current State</div>
+              <div class="row-caption" x-text="sessLabel()"></div>
             </div>
-          </div>
-
-          <div class="section-label">Session Info</div>
-          <div class="card">
-            <div class="row">
-              <div class="row-icon" style="background:var(--tint);"><i data-lucide="users"></i></div>
-              <span class="row-title">Sessions</span>
-              <span class="row-end" x-text="data.sessions.count || '--'"></span>
-            </div>
-            <div class="row">
-              <div class="row-icon" style="background:#5856D6;"><i data-lucide="message-circle"></i></div>
-              <span class="row-title">Messages</span>
-              <span class="row-end" x-text="data.sessions.messages || '--'"></span>
-            </div>
-            <div class="row">
-              <div class="row-icon" style="background:var(--cyan);"><i data-lucide="calendar"></i></div>
-              <span class="row-title">Latest Activity</span>
-              <span class="row-end" x-text="fmtTs(data.sessions.latest)"></span>
-            </div>
-          </div>
-
-          <div class="section-label">Sessions</div>
-          <div class="card">
-            <template x-if="data.sessions.details && data.sessions.details.length">
-              <div>
-                <template x-for="(s, i) in data.sessions.details" :key="s.id">
-                  <div class="row">
-                    <div class="row-icon" style="background:var(--label-primary);"><i data-lucide="folder"></i></div>
-                    <div class="row-body">
-                      <div class="row-title" x-text="s.id"></div>
-                      <div class="row-caption" x-text="'Latest: ' + fmtTs(s.latest)"></div>
-                    </div>
-                    <span class="row-end" x-text="s.messages + ' msgs'"></span>
-                  </div>
-                </template>
-              </div>
-            </template>
-            <template x-if="!data.sessions.details || data.sessions.details.length === 0">
-              <div class="placeholder">
-                <div class="placeholder-icon"><i data-lucide="inbox"></i></div>
-                <div class="placeholder-title">No Session Details</div>
-                <div class="placeholder-sub">セッションが存在しません</div>
-              </div>
-            </template>
+            <span class="row-end" style="color:var(--tint);font-weight:600;" x-text="data.sessions.thinking_sessions || 0"></span>
           </div>
         </div>
-      </template>
-    </div>
 
-    <!-- ===== Config Tab ===== -->
-    <div class="panel" :class="{ active: tab === 'config' }" x-ref="panelConfig">
-      <template x-if="data">
-        <div>
-          <div class="section-label" style="padding-top:4px;">General</div>
-          <div class="card">
-            <div class="row">
-              <div class="row-icon" style="background:var(--orange);"><i data-lucide="radio"></i></div>
-              <span class="row-title">Gateway</span>
-              <span class="row-end mono" x-text="(data.config.gateway.host || '-') + ':' + (data.config.gateway.port || '-')"></span>
-            </div>
-            <div class="row">
-              <div class="row-icon" style="background:#5856D6;"><i data-lucide="layers"></i></div>
-              <span class="row-title">Model</span>
-              <span class="row-end" x-text="data.config.model ? data.config.model.split('/').pop() : 'N/A'"></span>
-            </div>
+        <div class="section-label">Session Info</div>
+        <div class="card card-animate">
+          <div class="row">
+            <div class="row-icon" style="background:var(--tint);"><i data-lucide="users"></i></div>
+            <span class="row-title">Sessions</span>
+            <span class="row-end" x-text="data.sessions.count || '--'"></span>
           </div>
+          <div class="row">
+            <div class="row-icon" style="background:var(--indigo);"><i data-lucide="message-circle"></i></div>
+            <span class="row-title">Messages</span>
+            <span class="row-end" x-text="data.sessions.messages || '--'"></span>
+          </div>
+          <div class="row">
+            <div class="row-icon" style="background:var(--cyan);"><i data-lucide="calendar"></i></div>
+            <span class="row-title">Latest Activity</span>
+            <span class="row-end" x-text="fmtTs(data.sessions.latest)"></span>
+          </div>
+        </div>
 
-          <!-- Channels -->
-          <template x-if="data.config.channels && Object.keys(data.config.channels).length > 0">
+        <div class="section-label">Sessions</div>
+        <div class="card card-animate">
+          <template x-if="data.sessions.details && data.sessions.details.length">
             <div>
-              <div class="section-label">Channels</div>
-              <div class="card">
-                <template x-for="(ch, key) in data.config.channels" :key="key">
-                  <div class="ch-row">
-                    <div class="ch-left">
-                      <span class="ch-dot" :style="{ background: ch.enabled ? 'var(--green)' : 'var(--label-tertiary)' }"></span>
-                      <span class="ch-label" x-text="key"></span>
-                    </div>
-                    <span class="ch-badge" :style="{ background: ch.enabled ? 'var(--green-soft)' : 'var(--fill-tertiary)', color: ch.enabled ? 'var(--green)' : 'var(--label-tertiary)' }" x-text="ch.enabled ? 'ON' : 'OFF'"></span>
+              <template x-for="(s, i) in data.sessions.details" :key="s.id">
+                <div class="row">
+                  <div class="row-icon session-icon-bg" style="background:var(--label-primary);"><i data-lucide="folder"></i></div>
+                  <div class="row-body">
+                    <div class="row-title" x-text="s.id"></div>
+                    <div class="row-caption" x-text="'Latest: ' + fmtTs(s.latest)"></div>
                   </div>
-                </template>
-              </div>
+                  <span class="row-end" x-text="s.messages + ' msgs'"></span>
+                </div>
+              </template>
             </div>
           </template>
+          <template x-if="!data.sessions.details || data.sessions.details.length === 0">
+            <div class="placeholder">
+              <div class="placeholder-icon"><i data-lucide="inbox"></i></div>
+              <div class="placeholder-title">No Session Details</div>
+              <div class="placeholder-sub">No sessions found</div>
+            </div>
+          </template>
+        </div>
+      </div>
+    </template>
+  </div>
 
-          <!-- Cron -->
+  <!-- ===== Test Chat Tab ===== -->
+  <div class="panel" :class="{ active: tab === 'chat' }" x-ref="panelChat">
+    <template x-if="data">
+      <div>
+        <!-- Model info header -->
+        <div class="section-label" style="padding-top:8px;">Test Chat</div>
+        <div class="card card-animate" style="margin-bottom:12px;">
+          <div class="row" @click="openChat()">
+            <div class="row-icon" style="background:var(--purple);"><i data-lucide="message-square-plus"></i></div>
+            <div class="row-body" style="min-width:0;">
+              <div class="row-title">New Chat</div>
+              <div class="row-caption model-name-truncate" x-text="'Model: ' + (data.config?.model || 'Unknown')" :title="data.config?.model || ''"></div>
+            </div>
+            <i data-lucide="chevron-right" style="width:16px;height:16px;color:var(--label-tertiary);stroke-width:2.5;"></i>
+          </div>
+        </div>
+
+        <!-- Saved Chats -->
+        <div class="section-label">Saved Chats</div>
+        <div class="card card-animate">
+          <template x-if="savedChats.length > 0">
+            <div>
+              <template x-for="(sc, idx) in savedChats" :key="idx">
+                <div class="row" @click="loadSavedChat(idx)">
+                  <div class="row-icon" style="background:var(--cyan);"><i data-lucide="bookmark"></i></div>
+                  <div class="row-body">
+                    <div class="row-title" x-text="sc.title"></div>
+                    <div class="row-caption" x-text="sc.messages.length + ' messages - ' + fmtTs(sc.savedAt)"></div>
+                  </div>
+                  <button class="chat-action-btn" @click.stop="deleteSavedChat(idx)" style="color:var(--red);">
+                    <i data-lucide="trash-2"></i>
+                  </button>
+                </div>
+              </template>
+            </div>
+          </template>
+          <template x-if="savedChats.length === 0">
+            <div class="placeholder">
+              <div class="placeholder-icon"><i data-lucide="bookmark"></i></div>
+              <div class="placeholder-title">No Saved Chats</div>
+              <div class="placeholder-sub">Save conversations from the chat overlay</div>
+            </div>
+          </template>
+        </div>
+      </div>
+    </template>
+  </div>
+
+  <!-- ===== Config Tab ===== -->
+  <div class="panel" :class="{ active: tab === 'config' }" x-ref="panelConfig">
+    <template x-if="data">
+      <div>
+        <div class="section-label" style="padding-top:8px;">General</div>
+        <div class="card card-animate">
+          <div class="row">
+            <div class="row-icon" style="background:var(--orange);"><i data-lucide="radio"></i></div>
+            <span class="row-title">Gateway</span>
+            <span class="row-end mono" x-text="(data.config.gateway.host || '-') + ':' + (data.config.gateway.port || '-')"></span>
+          </div>
+          <div class="row">
+            <div class="row-icon" style="background:var(--indigo);"><i data-lucide="layers"></i></div>
+            <div class="row-body">
+              <div class="row-title">Model</div>
+            </div>
+            <span class="row-end model-name-truncate" :title="data.config.model || 'N/A'" x-text="data.config.model ? data.config.model.split('/').pop() : 'N/A'"></span>
+          </div>
+        </div>
+
+        <!-- Channels -->
+        <template x-if="data.config.channels && Object.keys(data.config.channels).length > 0">
+          <div class="card-animate">
+            <div class="section-label">Channels</div>
+            <div class="card">
+              <template x-for="(ch, key) in data.config.channels" :key="key">
+                <div class="ch-row">
+                  <div class="ch-left">
+                    <span class="ch-dot" :style="{ background: ch.enabled ? 'var(--green)' : 'var(--label-tertiary)' }"></span>
+                    <span class="ch-label" x-text="key"></span>
+                  </div>
+                  <span class="ch-badge" :style="{ background: ch.enabled ? 'var(--green-soft)' : 'var(--fill-tertiary)', color: ch.enabled ? 'var(--green)' : 'var(--label-tertiary)' }" x-text="ch.enabled ? 'ON' : 'OFF'"></span>
+                </div>
+              </template>
+            </div>
+          </div>
+        </template>
+
+        <!-- Schedule (improved display) -->
+        <div class="card-animate">
           <div class="section-label">Schedule</div>
           <div class="card">
             <template x-if="data.cron_jobs.jobs && data.cron_jobs.jobs.length > 0">
               <div>
                 <template x-for="(job, idx) in data.cron_jobs.jobs" :key="job.id || idx">
-                  <div class="row" :style="{ opacity: job.enabled !== false ? 1 : 0.45 }">
-                    <div class="row-icon" style="background:var(--orange);"><i data-lucide="timer"></i></div>
-                    <div class="row-body">
-                      <div class="row-title" x-text="job.name || job.id || '--'"></div>
-                      <div class="row-caption" x-text="job.expr || '--'"></div>
+                  <div class="sched-row" :style="{ opacity: job.enabled !== false ? 1 : 0.45 }">
+                    <div class="row-icon" :style="{ background: job.enabled !== false ? 'var(--orange)' : 'var(--fill-primary)' }">
+                      <i data-lucide="timer"></i>
                     </div>
-                    <div style="flex-shrink:0;text-align:right;">
-                      <div style="font-size:12px;color:var(--label-secondary);font-variant-numeric:tabular-nums;" x-text="'Next: ' + fmtTs(job.nextRunAtMs)"></div>
-                      <div style="font-size:11px;font-weight:600;" :style="{ color: job.lastStatus === 'ok' ? 'var(--green)' : 'var(--label-tertiary)' }" x-text="job.lastStatus || '--'"></div>
+                    <div class="sched-body">
+                      <div class="sched-title" x-text="job.id || 'Job ' + (idx + 1)"></div>
+                      <div class="sched-expr" x-text="fmtCron(job.expr)"></div>
+                      <div class="sched-cmd" x-text="job.command || 'No command'" :title="job.command || ''"></div>
+                    </div>
+                    <div class="sched-status"
+                      :style="{
+                        background: job.enabled !== false ? 'var(--green-soft)' : 'var(--fill-tertiary)',
+                        color: job.enabled !== false ? 'var(--green)' : 'var(--label-tertiary)'
+                      }"
+                      x-text="job.enabled !== false ? 'Active' : 'Disabled'">
                     </div>
                   </div>
                 </template>
@@ -1154,134 +1106,211 @@ body {
             </template>
           </div>
         </div>
-      </template>
+      </div>
+    </template>
+  </div>
+
+  <!-- ===== Info Tab ===== -->
+  <div class="panel" :class="{ active: tab === 'info' }" x-ref="panelInfo">
+    <div class="section-label" style="padding-top:8px;">Profile</div>
+    <div class="card card-animate">
+      <div class="info-profile-card">
+        <div class="info-avatar">N</div>
+        <div class="info-name">nezumi0627</div>
+        <div class="info-sub">Nanobot User</div>
+        <div class="info-social">
+          <a href="https://github.com/nezumi0627" target="_blank" rel="noopener noreferrer" class="info-social-btn" aria-label="GitHub">
+            <i data-lucide="github"></i>
+          </a>
+          <a href="https://x.com/nezum1n1um" target="_blank" rel="noopener noreferrer" class="info-social-btn" aria-label="X">
+            <svg viewBox="0 0 24 24" style="width:18px;height:18px;fill:currentColor;"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+          </a>
+        </div>
+      </div>
     </div>
 
-    <!-- ===== Info Tab ===== -->
-    <div class="panel" :class="{ active: tab === 'info' }" x-ref="panelInfo">
-      <div class="card" style="margin-top:4px;">
-        <div class="info-header">
-          <div class="info-header-brand">NANOBOT CONSOLE</div>
-          <div class="info-avatar-wrap">
-            <img class="info-avatar" src="/static/avatar.png" alt="avatar">
-          </div>
+    <div class="section-label">Links</div>
+    <div class="card card-animate">
+      <a href="https://github.com/nezumi0627/nano-board" target="_blank" rel="noopener noreferrer" class="row" style="text-decoration:none;">
+        <div class="row-icon" style="background:#24292e;"><i data-lucide="github"></i></div>
+        <div class="row-body">
+          <div class="row-title">GitHub Repository</div>
+          <div class="row-caption">nezumi0627/nano-board</div>
         </div>
-        <div class="info-body">
-          <!-- Profile -->
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-            <div>
-              <div class="info-name">
-                🐱 NanoBot
+        <i data-lucide="chevron-right" style="width:16px;height:16px;color:var(--label-tertiary);stroke-width:2.5;"></i>
+      </a>
+      <a href="https://x.com/nezum1n1um" target="_blank" rel="noopener noreferrer" class="row" style="text-decoration:none;">
+        <div class="row-icon" style="background:#000;">
+          <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:#fff;"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        </div>
+        <div class="row-body">
+          <div class="row-title">X (Twitter)</div>
+          <div class="row-caption">@nezum1n1um</div>
+        </div>
+        <i data-lucide="chevron-right" style="width:16px;height:16px;color:var(--label-tertiary);stroke-width:2.5;"></i>
+      </a>
+    </div>
+  </div>
+
+</main>
+
+<!-- ===== Bottom Tab Bar ===== -->
+<nav class="tab-bar">
+  <div class="tab-bar-row">
+    <button class="tab-btn" :class="{ active: tab === 'overview' }" @click="switchTab('overview')">
+      <i data-lucide="layout-dashboard"></i>
+      <span>Overview</span>
+    </button>
+    <button class="tab-btn" :class="{ active: tab === 'sessions' }" @click="switchTab('sessions')">
+      <i data-lucide="message-square"></i>
+      <span>Sessions</span>
+    </button>
+    <button class="tab-btn" :class="{ active: tab === 'chat' }" @click="switchTab('chat')">
+      <i data-lucide="bot"></i>
+      <span>Chat</span>
+    </button>
+    <button class="tab-btn" :class="{ active: tab === 'config' }" @click="switchTab('config')">
+      <i data-lucide="settings"></i>
+      <span>Config</span>
+    </button>
+    <button class="tab-btn" :class="{ active: tab === 'info' }" @click="switchTab('info')">
+      <i data-lucide="info"></i>
+      <span>Info</span>
+    </button>
+  </div>
+</nav>
+
+<!-- Update Modal -->
+<div x-show="showUpdatePopup" class="modal-backdrop" style="display:none;"
+  x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+  x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+  <div class="modal" @click.away="showUpdatePopup = false"
+    x-transition:enter="transition ease-out duration-250" x-transition:enter-start="opacity-0 scale-90" x-transition:enter-end="opacity-100 scale-100"
+    x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-90">
+    <div class="modal-icon"><i data-lucide="info"></i></div>
+    <div class="modal-title">Update Status</div>
+    <div class="modal-text" x-text="updatePopupMsg"></div>
+    <div class="modal-text-sub" x-text="'Current Version: ' + (data?.app_info?.version || 'Unknown')"></div>
+    <div class="modal-text-sub" x-text="'Last Updated: ' + (data?.app_info?.last_updated || 'Unknown')"></div>
+    <button class="btn-primary" @click="showUpdatePopup = false">Close</button>
+  </div>
+</div>
+
+<!-- Chat Overlay -->
+<template x-if="showChatOverlay">
+  <div class="chat-overlay"
+    x-transition:enter="transition ease-out duration-250"
+    x-transition:enter-start="opacity-0 translate-y-full"
+    x-transition:enter-end="opacity-100 translate-y-0">
+    <!-- Chat Header -->
+    <header class="top-bar" style="position:sticky;">
+      <div class="top-bar-inner">
+        <button class="icon-btn" @click="closeChat()" style="color:var(--tint);">
+          <i data-lucide="chevron-down"></i>
+        </button>
+        <span class="top-title" style="font-size:15px;">
+          Test Chat
+          <span style="font-size:12px;font-weight:400;color:var(--label-tertiary);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" x-text="data?.config?.model ? data.config.model.split('/').pop() : ''"></span>
+        </span>
+        <div style="display:flex;gap:2px;">
+          <button class="icon-btn" @click="saveCurrentChat()" aria-label="Save">
+            <i data-lucide="bookmark"></i>
+          </button>
+          <button class="icon-btn" @click="clearChat()" style="color:var(--red);" aria-label="Clear">
+            <i data-lucide="trash-2"></i>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Chat Messages -->
+    <div id="chat-content" class="chat-content scroll-area">
+      <template x-for="(msg, idx) in chatMessages" :key="msg._id">
+        <div class="chat-msg-group" :class="msg.role">
+          <!-- Bubble -->
+          <div class="chat-bubble" :class="msg.role === 'user' ? 'user' : 'bot'">
+            <!-- Editing state -->
+            <template x-if="msg._editing">
+              <div style="display:flex;flex-direction:column;gap:6px;">
+                <input type="text" class="chat-edit-input" x-model="msg._editText" @keydown.enter="confirmEdit(idx)" @keydown.escape="cancelEdit(idx)" style="color: var(--label-primary);">
+                <div style="display:flex;gap:6px;justify-content:flex-end;">
+                  <button class="chat-edit-btn cancel" @click="cancelEdit(idx)">Cancel</button>
+                  <button class="chat-edit-btn save" @click="confirmEdit(idx)">Send</button>
+                </div>
               </div>
-              <div class="info-role">Running on <span x-text="data.process?.running ? 'PID ' + data.process.pid : 'Unknown'"></span></div>
-            </div>
-            <div class="info-social">
-              <a href="https://github.com/nezumi0627" target="_blank" rel="noopener noreferrer" class="info-social-btn" aria-label="GitHub">
-                <i data-lucide="github"></i>
-              </a>
-              <a href="https://x.com/nezum1n1um" target="_blank" rel="noopener noreferrer" class="info-social-btn" aria-label="X">
-                <svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:currentColor;"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-              </a>
-            </div>
+            </template>
+            <!-- Normal text -->
+            <template x-if="!msg._editing">
+              <span x-html="parseMsg(msg.text)"></span>
+            </template>
           </div>
 
-          <!-- About -->
-          <div class="info-about">
-            <div class="info-about-header">
-              <div class="info-about-icon"><i data-lucide="zap"></i></div>
-              <span class="info-about-label">System Stats</span>
+          <!-- Actions row -->
+          <template x-if="!msg._editing">
+            <div class="chat-msg-actions">
+              <!-- Copy -->
+              <button class="chat-action-btn" :class="{ copied: msg._copied }" @click="copyMsg(idx)" :aria-label="'Copy'">
+                <i :data-lucide="msg._copied ? 'check' : 'copy'"></i>
+              </button>
+              <!-- Edit (user only) -->
+              <template x-if="msg.role === 'user'">
+                <button class="chat-action-btn" @click="startEdit(idx)" aria-label="Edit">
+                  <i data-lucide="pencil"></i>
+                </button>
+              </template>
+              <!-- Regenerate (bot only) -->
+              <template x-if="msg.role === 'bot' && idx > 0">
+                <button class="chat-action-btn" @click="regenerate(idx)" aria-label="Regenerate">
+                  <i data-lucide="refresh-cw"></i>
+                </button>
+              </template>
+              <!-- Detail toggle -->
+              <button class="chat-action-btn" @click="msg._showDetail = !msg._showDetail" aria-label="Details">
+                <i :data-lucide="msg._showDetail ? 'chevron-up' : 'info'"></i>
+              </button>
             </div>
-            <div class="space-y-2 mt-2">
-                <div class="flex justify-between text-sm">
-                    <span class="text-label-secondary">Uptime</span>
-                    <span class="font-medium" x-text="formatUptime(data.process?.uptime_seconds || 0)"></span>
-                </div>
-                <div class="flex justify-between text-sm">
-                    <span class="text-label-secondary">Memory</span>
-                    <span class="font-medium">
-                        <span x-text="data.process?.memory_mb || 0"></span> MB
-                        (<span x-text="data.process?.memory_percent || 0"></span>%)
-                    </span>
-                </div>
-                <div class="flex justify-between text-sm">
-                    <span class="text-label-secondary">CPU</span>
-                    <span class="font-medium"><span x-text="data.process?.cpu_percent || 0"></span>%</span>
-                </div>
-            </div>
-          </div>
+          </template>
 
-          <!-- Meta -->
-          <div class="info-meta">
-            <div class="info-meta-item">
-              <i data-lucide="calendar"></i>
-              <span style="color:var(--label-secondary);">Started:</span> 2026/02/06
+          <!-- Meta detail -->
+          <template x-if="msg._showDetail && !msg._editing">
+            <div class="chat-meta-detail" style="animation: bubble-in 0.2s var(--ease-spring);">
+              <span><span>Role</span><strong x-text="msg.role === 'user' ? 'You' : 'Bot'"></strong></span>
+              <template x-if="msg.model"><span><span>Model</span><strong x-text="msg.model" style="word-break:break-all;"></strong></span></template>
+              <template x-if="msg.genTime"><span><span>Generation</span><strong x-text="msg.genTime + 'ms'"></strong></span></template>
+              <span><span>Sent at</span><strong x-text="new Date(msg.ts).toLocaleTimeString('ja-JP')"></strong></span>
             </div>
-            <div class="info-meta-item">
-              <span class="info-meta-badge">OSS</span>
-              Nanobot Core v0.0.0
-            </div>
-          </div>
+          </template>
+        </div>
+      </template>
 
-          <!-- Footer -->
-          <div class="info-footer">
-            <span class="info-footer-brand">NANOBOT CONSOLE</span>
-            <div class="info-footer-ver">
-              <span class="info-footer-ver-label">Current Target</span>
-              <span class="info-footer-ver-val">v0.0.0</span>
-            </div>
-          </div>
+      <!-- Loading indicator -->
+      <div x-show="chatLoading" style="align-self:flex-start;">
+        <div class="chat-bubble bot" style="display:flex;gap:4px;padding:14px 18px;">
+          <div class="status-dot live" style="background:var(--label-tertiary);width:5px;height:5px;"></div>
+          <div class="status-dot live" style="background:var(--label-tertiary);width:5px;height:5px;animation-delay:0.2s;"></div>
+          <div class="status-dot live" style="background:var(--label-tertiary);width:5px;height:5px;animation-delay:0.4s;"></div>
         </div>
       </div>
-
-      <!-- Links -->
-      <div class="section-label">Links</div>
-      <div class="card">
-        <a href="https://github.com/nezumi0627/nanobot-dashboard" target="_blank" rel="noopener noreferrer" class="row" style="text-decoration:none;cursor:pointer;">
-          <div class="row-icon" style="background:#24292e;"><i data-lucide="github"></i></div>
-          <div class="row-body">
-            <div class="row-title">GitHub Repository</div>
-            <div class="row-caption">nezumi0627/nanobot-dashboard</div>
-          </div>
-          <i data-lucide="chevron-right" style="width:16px;height:16px;color:var(--label-tertiary);stroke-width:2;"></i>
-        </a>
-        <a href="https://x.com/nezum1n1um" target="_blank" rel="noopener noreferrer" class="row" style="text-decoration:none;cursor:pointer;">
-          <div class="row-icon" style="background:var(--label-primary);">
-            <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:#fff;"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-          </div>
-          <div class="row-body">
-            <div class="row-title">X (Twitter)</div>
-            <div class="row-caption">@nezum1n1um</div>
-          </div>
-          <i data-lucide="chevron-right" style="width:16px;height:16px;color:var(--label-tertiary);stroke-width:2;"></i>
-        </a>
-      </div>
     </div>
 
-  </main>
-
-  <!-- ===== Bottom Tab Bar ===== -->
-  <nav class="tab-bar">
-    <div class="tab-bar-row">
-      <button class="tab-btn" :class="{ active: tab === 'overview' }" @click="switchTab('overview')">
-        <i data-lucide="layout-dashboard"></i>
-        <span>Overview</span>
-      </button>
-      <button class="tab-btn" :class="{ active: tab === 'sessions' }" @click="switchTab('sessions')">
-        <i data-lucide="message-square"></i>
-        <span>Sessions</span>
-      </button>
-      <button class="tab-btn" :class="{ active: tab === 'config' }" @click="switchTab('config')">
-        <i data-lucide="settings"></i>
-        <span>Config</span>
-      </button>
-      <button class="tab-btn" :class="{ active: tab === 'info' }" @click="switchTab('info')">
-        <i data-lucide="info"></i>
-        <span>Info</span>
+    <!-- Chat Input -->
+    <div class="chat-input-bar">
+      <textarea x-model="chatInput" @keydown.enter.prevent="sendChat()" placeholder="Type a message..." class="chat-text-input" rows="1"
+        @input="autoResize($event)" style="overflow:hidden;"></textarea>
+      <button @click="sendChat()" class="chat-send-btn" :style="{ opacity: chatInput.trim() ? 1 : 0.4 }">
+        <i data-lucide="arrow-up"></i>
       </button>
     </div>
-  </nav>
+  </div>
+</template>
+
+<!-- Socket.IO -->
+<script src="https://cdn.socket.io/4.7.4/socket.io.min.js" integrity="sha384-Gr6Lu2Ajx28mzwyVR8CFkULdCU7kMlZ9UthllibdOSo6qAiN+yXNHqtgdTvFXMT4" crossorigin="anonymous"></script>
 
 <script>
+var _msgId = 0;
+function mkId() { return ++_msgId; }
+
 function app() {
   return {
     tab: 'overview',
@@ -1291,13 +1320,35 @@ function app() {
     error: null,
     refreshDeg: 0,
     updating: false,
-    _interval: null,
     _hasAnimatedInitial: false,
     swReg: null,
     updateAvailable: false,
+    socket: null,
+    showUpdatePopup: false,
+    updatePopupMsg: '',
+
+    // Chat
+    showChatOverlay: false,
+    chatInput: '',
+    chatMessages: [],
+    chatLoading: false,
+    _chatSendTs: 0,
+
+    // Saved chats
+    savedChats: [],
+
+    // Gateway inline status
+    gwLoading: null,
+    gwResults: {},
+
+    // Toast
+    toastMsg: '',
+    toastIcon: 'check-circle',
+    toastColor: 'var(--green)',
+    toastAction: null,
+    _toastTimer: null,
 
     init() {
-      /* Theme: read stored or use system preference */
       var stored = localStorage.getItem('nanobot-theme');
       if (stored) {
         this.isDark = stored === 'dark';
@@ -1306,24 +1357,70 @@ function app() {
       }
       this.applyTheme();
 
-      this.fetchData();
-      this._interval = setInterval(() => this.fetchData(), 5000);
+      // Load saved chats
+      try {
+        var sc = localStorage.getItem('nanobot-saved-chats');
+        if (sc) this.savedChats = JSON.parse(sc);
+      } catch(e) {}
+
+      this.socket = io();
+
+      this.socket.on('connect', () => { this.error = null; });
+
+      this.socket.on('status_update', (json) => {
+        this.data = json;
+        this.firstLoad = false;
+        this.updating = false;
+        this.error = null;
+        this.$nextTick(() => {
+          this.reinitIcons();
+          if (!this._hasAnimatedInitial) {
+            this._hasAnimatedInitial = true;
+            var panel = this.$refs['panel' + this.capitalize(this.tab)];
+            if (panel && window.gsap) {
+              gsap.fromTo(panel, { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.4, ease: 'power2.out' });
+            }
+          }
+        });
+      });
+
+      this.socket.on('disconnect', () => { this.error = "Disconnected"; });
+      this.socket.on('connect_error', () => { this.error = "Connection Error"; });
+
+      this.socket.on('test_chat_response', (data) => {
+        var genTime = Date.now() - this._chatSendTs;
+        this.chatLoading = false;
+        if (data.error) {
+          this.chatMessages.push({
+            _id: mkId(), role: 'bot', text: 'Error: ' + data.error,
+            ts: Date.now(), model: null, genTime: genTime,
+            _copied: false, _showDetail: false, _editing: false, _editText: ''
+          });
+        } else {
+          this.chatMessages.push({
+            _id: mkId(), role: 'bot', text: data.content,
+            ts: Date.now(), model: this.data?.config?.model || null, genTime: genTime,
+            _copied: false, _showDetail: false, _editing: false, _editText: ''
+          });
+        }
+        this.scrollToBottom();
+        this.$nextTick(() => this.reinitIcons());
+      });
 
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/sw.js').then(reg => {
           this.swReg = reg;
           reg.onupdatefound = () => {
-            const installingWorker = reg.installing;
+            var installingWorker = reg.installing;
             installingWorker.onstatechange = () => {
               if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                 this.updateAvailable = true;
-                 this.$nextTick(() => this.reinitIcons());
+                this.updateAvailable = true;
+                this.$nextTick(() => this.reinitIcons());
               }
             };
           };
-        });
-        
-        let refreshing;
+        }).catch(() => {});
+        var refreshing;
         navigator.serviceWorker.addEventListener('controllerchange', () => {
           if (refreshing) return;
           window.location.reload();
@@ -1334,21 +1431,27 @@ function app() {
       this.$nextTick(() => { this.reinitIcons(); });
     },
 
+    showToast(msg, icon, color, duration) {
+      this.toastMsg = msg;
+      this.toastIcon = icon || 'check-circle';
+      this.toastColor = color || 'var(--green)';
+      this.toastAction = null;
+      clearTimeout(this._toastTimer);
+      this.$nextTick(() => this.reinitIcons());
+      this._toastTimer = setTimeout(() => { this.toastMsg = ''; }, duration || 2500);
+    },
+
     applyUpdate() {
       if (this.swReg && this.swReg.waiting) {
         this.swReg.waiting.postMessage({ type: 'SKIP_WAITING' });
       } else {
-          window.location.reload();
+        window.location.reload();
       }
     },
 
     applyTheme() {
       var html = document.getElementById('htmlRoot');
-      if (this.isDark) {
-        html.classList.add('dark');
-      } else {
-        html.classList.remove('dark');
-      }
+      if (this.isDark) { html.classList.add('dark'); } else { html.classList.remove('dark'); }
       var el = document.getElementById('themeColor');
       if (el) el.content = this.isDark ? '#000000' : '#F2F2F7';
     },
@@ -1358,22 +1461,23 @@ function app() {
       var oldRef = 'panel' + this.capitalize(this.tab);
       var oldPanel = this.$refs[oldRef];
       var newName = name;
-
       if (oldPanel && window.gsap) {
         gsap.to(oldPanel, {
-          opacity: 0, y: 6, duration: 0.12, ease: 'power2.in',
+          opacity: 0, y: 8, duration: 0.12, ease: 'power2.in',
           onComplete: () => {
             this.tab = newName;
             this.$nextTick(() => {
               this.reinitIcons();
               var np = this.$refs['panel' + this.capitalize(newName)];
-              if (np) gsap.fromTo(np, { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.25, ease: 'power2.out' });
+              if (np) gsap.fromTo(np, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.25, ease: 'power2.out' });
+              window.scrollTo({ top: 0, behavior: 'smooth' });
             });
           }
         });
       } else {
         this.tab = name;
         this.$nextTick(() => this.reinitIcons());
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     },
 
@@ -1383,72 +1487,25 @@ function app() {
       this.isDark = !this.isDark;
       localStorage.setItem('nanobot-theme', this.isDark ? 'dark' : 'light');
       this.applyTheme();
-      this.$nextTick(() => this.reinitIcons());
     },
 
     refresh() {
       this.refreshDeg += 360;
-      this.fetchData();
+      if (this.socket) { this.updating = true; this.socket.emit('request_update'); }
     },
 
-    async fetchData() {
-      try {
-        this.error = null;
-        /* Show updating indicator for background refreshes, skeleton for first load */
-        if (this.data) {
-          this.updating = true;
-        }
+    fetchData() { this.refresh(); },
 
-        var res = await fetch('/api/status');
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        var json = await res.json();
-
-        this.data = json;
-        this.firstLoad = false;
-        this.updating = false;
-
-        this.$nextTick(() => {
-          this.reinitIcons();
-          /* Only animate the panel on the very first load */
-          if (!this._hasAnimatedInitial) {
-            this._hasAnimatedInitial = true;
-            var panel = this.$refs['panel' + this.capitalize(this.tab)];
-            if (panel && window.gsap) {
-              gsap.fromTo(panel, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.35, ease: 'power2.out' });
-            }
-          }
-        });
-      } catch (e) {
-        this.updating = false;
-        if (!this.data) {
-          this.firstLoad = false;
-        }
-        this.error = e.message || 'Connection failed';
-        this.$nextTick(() => this.reinitIcons());
-      }
-    },
-
-    // Icons
     reinitIcons() {
       if (window.lucide) {
-        // Clear previously initialized icons to prevent duplication
-        document.querySelectorAll('[data-lucide]').forEach(el => {
-          if (el.hasAttribute('data-initialized')) {
-            el.innerHTML = '';
-            el.removeAttribute('data-initialized');
-          }
-        });
+        document.querySelectorAll('[data-lucide]').forEach(el => { el.replaceChildren(); });
         lucide.createIcons();
-        document.querySelectorAll('[data-lucide]').forEach(el => el.setAttribute('data-initialized', 'true'));
       }
     },
 
-    /* Formatters */
     fmtUptime(s) {
       if (!s) return 'N/A';
-      var d = Math.floor(s / 86400);
-      var h = Math.floor((s % 86400) / 3600);
-      var m = Math.floor((s % 3600) / 60);
+      var d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60);
       if (d) return d + 'd ' + h + 'h';
       if (h) return h + 'h ' + m + 'm';
       return m + 'm';
@@ -1458,19 +1515,29 @@ function app() {
       return new Date(v).toLocaleString('ja-JP', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
     },
     fmtMem(v) { return v ? Math.round(v) + ' MB' : 'N/A'; },
+    fmtCron(expr) {
+      if (!expr) return '--';
+      var parts = expr.split(' ');
+      if (parts.length >= 5) {
+        if (parts[0].match(/^\d+$/) && parts[1].match(/^\d+$/) && parts[2] === '*' && parts[3] === '*' && parts[4] === '*') {
+             var m = parts[0].padStart(2, '0');
+             var h = parts[1].padStart(2, '0');
+             return h + ':' + m;
+        }
+      }
+      return expr;
+    },
+    parseMsg(text) {
+      if (!text) return '';
+      var safe = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      return safe.replace(/&lt;think&gt;/g, '<details class="think-block"><summary>Thinking Process</summary><div class="think-content">')
+                 .replace(/&lt;\/think&gt;/g, '</div></details>');
+    },
     clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); },
     memPercent(pct) { return pct ? this.clamp(pct, 0, 100) : 0; },
 
-    cpuColor(pct) {
-      if (pct > 80) return 'var(--red)';
-      if (pct > 50) return 'var(--orange)';
-      return 'var(--tint)';
-    },
-    memColor(pct) {
-      if (pct > 80) return 'var(--red)';
-      if (pct > 50) return 'var(--orange)';
-      return 'var(--green)';
-    },
+    cpuColor(pct) { if (pct > 80) return 'var(--red)'; if (pct > 50) return 'var(--orange)'; return 'var(--tint)'; },
+    memColor(pct) { if (pct > 80) return 'var(--red)'; if (pct > 50) return 'var(--orange)'; return 'var(--green)'; },
 
     enabledChannels() {
       if (!this.data || !this.data.config.channels) return 0;
@@ -1496,37 +1563,212 @@ function app() {
 
     tailscaleLabel() {
       if (!this.data || !this.data.tailscale) return 'Tailscale: N/A';
-      var t = this.data.tailscale;
-      var status = t.online ? 'Online' : 'Offline';
-      var url = t.url ? ' · ' + t.url : '';
-      return 'Tailscale: ' + status + url;
+      return 'Tailscale: ' + (this.data.tailscale.online ? 'Online' : 'Offline');
     },
 
-    async registerSW() {
-      if (!('serviceWorker' in navigator)) return;
+    // Gateway control - inline status, no popup
+    gwStatusText(action) { 
+        var t = this.gwResults[action] || '';
+        return t === 'OK' ? '' : t;
+    },
+    gwStatusClass(action) {
+      var r = this.gwResults[action] || '';
+      if (r === 'OK') return 'success';
+      if (r.startsWith('Error')) return 'error';
+      return '';
+    },
+
+    async controlGateway(action) {
+      this.gwLoading = action;
+      this.gwResults[action] = '';
       try {
-        var reg = await navigator.serviceWorker.register('/sw.js');
-        this.swReg = reg;
-        if (reg.update) reg.update();
-        navigator.serviceWorker.addEventListener('controllerchange', () => { window.location.reload(); });
-      } catch (e) {
+        var res = await fetch('/api/control/gateway', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({action: action})
+        });
+        var json = await res.json();
+        this.gwResults[action] = json.success ? 'OK' : 'Error';
+        this.showToast(
+          json.success ? action.charAt(0).toUpperCase() + action.slice(1) + ' successful' : 'Failed: ' + json.message,
+          json.success ? 'check-circle' : 'alert-circle',
+          json.success ? 'var(--green)' : 'var(--red)'
+        );
+      } catch(e) {
+        this.gwResults[action] = 'Error';
+        this.showToast('Error: ' + e.message, 'alert-circle', 'var(--red)');
       }
+      this.gwLoading = null;
+      this.$nextTick(() => this.reinitIcons());
+      // Clear status text after 3s
+      var a = action;
+      setTimeout(() => { this.gwResults[a] = ''; }, 3000);
     },
 
     async checkForUpdate() {
-      try {
-        if (this.swReg && this.swReg.update) {
-          await this.swReg.update();
-        }
-        var regs = await navigator.serviceWorker.getRegistrations();
-        for (var r of regs) {
-          if (r.waiting) {
-            r.waiting.postMessage({ type: 'SKIP_WAITING' });
-            return;
+      this.updatePopupMsg = "Checking for updates...";
+      this.showUpdatePopup = true;
+      this.$nextTick(() => this.reinitIcons());
+      setTimeout(async () => {
+        try {
+          if (this.swReg && this.swReg.update) await this.swReg.update();
+          var regs = await navigator.serviceWorker.getRegistrations();
+          var found = false;
+          for (var r of regs) {
+            if (r.waiting) { this.updatePopupMsg = "New version available! Refresh to update."; found = true; break; }
           }
-        }
-      } catch (e) {
+          if (!found) this.updatePopupMsg = "You are using the latest version.";
+        } catch (e) { this.updatePopupMsg = "Check failed: " + e.message; }
+      }, 600);
+    },
+
+    // Chat methods
+    openChat() {
+      this.showChatOverlay = true;
+      if (this.chatMessages.length === 0) {
+        this.chatMessages.push({
+          _id: mkId(), role: 'bot', text: 'Hello! I am ready to test the model.',
+          ts: Date.now(), model: this.data?.config?.model || null, genTime: null,
+          _copied: false, _showDetail: false, _editing: false, _editText: ''
+        });
       }
+      this.$nextTick(() => { this.reinitIcons(); this.scrollToBottom(); });
+    },
+    closeChat() { this.showChatOverlay = false; },
+    clearChat() {
+      this.chatMessages = [];
+      this.chatMessages.push({
+        _id: mkId(), role: 'bot', text: 'Chat cleared. Send a new message to start.',
+        ts: Date.now(), model: null, genTime: null,
+        _copied: false, _showDetail: false, _editing: false, _editText: ''
+      });
+      this.$nextTick(() => this.reinitIcons());
+    },
+
+    sendChat() {
+      if (!this.chatInput.trim() || this.chatLoading) return;
+      var msg = this.chatInput.trim();
+      this.chatMessages.push({
+        _id: mkId(), role: 'user', text: msg, ts: Date.now(),
+        model: null, genTime: null,
+        _copied: false, _showDetail: false, _editing: false, _editText: ''
+      });
+      this.chatInput = '';
+      this.chatLoading = true;
+      this._chatSendTs = Date.now();
+      this.scrollToBottom();
+      this.$nextTick(() => this.reinitIcons());
+      this.socket.emit('test_chat', { message: msg });
+    },
+
+    // Copy message
+    copyMsg(idx) {
+      var msg = this.chatMessages[idx];
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(msg.text).then(() => {
+          msg._copied = true;
+          this.$nextTick(() => this.reinitIcons());
+          setTimeout(() => { msg._copied = false; this.$nextTick(() => this.reinitIcons()); }, 1500);
+        });
+      }
+    },
+
+    // Edit user message
+    startEdit(idx) {
+      var msg = this.chatMessages[idx];
+      msg._editText = msg.text;
+      msg._editing = true;
+      this.$nextTick(() => this.reinitIcons());
+    },
+    cancelEdit(idx) {
+      this.chatMessages[idx]._editing = false;
+      this.$nextTick(() => this.reinitIcons());
+    },
+    confirmEdit(idx) {
+      var msg = this.chatMessages[idx];
+      var newText = msg._editText.trim();
+      if (!newText) return;
+      msg._editing = false;
+      msg.text = newText;
+      // Remove all messages after this one
+      this.chatMessages.splice(idx + 1);
+      // Re-send
+      this.chatLoading = true;
+      this._chatSendTs = Date.now();
+      this.scrollToBottom();
+      this.$nextTick(() => this.reinitIcons());
+      this.socket.emit('test_chat', { message: newText });
+    },
+
+    // Regenerate: re-send the user message that preceded this bot message
+    regenerate(idx) {
+      var userMsg = null;
+      for (var i = idx - 1; i >= 0; i--) {
+        if (this.chatMessages[i].role === 'user') { userMsg = this.chatMessages[i]; break; }
+      }
+      if (!userMsg) return;
+      // Remove the bot message at idx
+      this.chatMessages.splice(idx, 1);
+      this.chatLoading = true;
+      this._chatSendTs = Date.now();
+      this.scrollToBottom();
+      this.$nextTick(() => this.reinitIcons());
+      this.socket.emit('test_chat', { message: userMsg.text });
+    },
+
+    // Save chat
+    saveCurrentChat() {
+      if (this.chatMessages.length <= 1) {
+        this.showToast('No messages to save', 'alert-circle', 'var(--orange)');
+        return;
+      }
+      var firstUser = this.chatMessages.find(m => m.role === 'user');
+      var title = firstUser ? firstUser.text.substring(0, 40) + (firstUser.text.length > 40 ? '...' : '') : 'Chat';
+      var saveData = {
+        title: title,
+        savedAt: Date.now(),
+        model: this.data?.config?.model || null,
+        messages: this.chatMessages.map(m => ({ role: m.role, text: m.text, ts: m.ts, model: m.model, genTime: m.genTime }))
+      };
+      this.savedChats.unshift(saveData);
+      this._persistSavedChats();
+      this.showToast('Chat saved', 'bookmark', 'var(--tint)');
+    },
+
+    loadSavedChat(idx) {
+      var sc = this.savedChats[idx];
+      this.chatMessages = sc.messages.map(m => ({
+        _id: mkId(), role: m.role, text: m.text, ts: m.ts, model: m.model, genTime: m.genTime,
+        _copied: false, _showDetail: false, _editing: false, _editText: ''
+      }));
+      this.showChatOverlay = true;
+      this.$nextTick(() => { this.reinitIcons(); this.scrollToBottom(); });
+    },
+
+    deleteSavedChat(idx) {
+      this.savedChats.splice(idx, 1);
+      this._persistSavedChats();
+      this.$nextTick(() => this.reinitIcons());
+      this.showToast('Deleted', 'trash-2', 'var(--red)', 1500);
+    },
+
+    _persistSavedChats() {
+      try { localStorage.setItem('nanobot-saved-chats', JSON.stringify(this.savedChats)); } catch(e) {}
+    },
+
+    scrollToBottom() {
+      this.$nextTick(() => {
+        setTimeout(() => {
+          var el = document.getElementById('chat-content');
+          if (el) el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+        }, 100);
+      });
+    },
+
+    autoResize(e) {
+      var el = e.target;
+      el.style.height = 'auto';
+      el.style.height = Math.min(el.scrollHeight, 120) + 'px';
     }
   };
 }
