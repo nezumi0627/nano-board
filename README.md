@@ -7,7 +7,9 @@ Tailscale認証を使用したNanobot管理コンソールです。
 - **モニタリング**: Nanobotプロセスの状態監視（PID, Uptime, Memory, CPU）
 - **詳細情報**: 設定情報（Gateway, Model, Channels）やセッション詳細の表示
 - **ネットワーク**: Tailscaleの状態とFunnel URLの表示
-- **ジョブ管理**: Cronジョブの状態確認
+- **ジョブ管理**: Cronジョブの状態確認（スケジュールを読みやすい形式で表示）
+- **チャットテスト**: モデルとの対話テスト機能（`<think>`タグの折りたたみ表示に対応）
+- **UI/UX**: 長いモデル名の適切な表示、チャットの自動スクロール、操作時のフィードバック改善
 - **PWA対応**: iOS/Androidでのアプリ化と更新機能（Service Worker）
 - **セキュリティ**: Tailscale認証によるアクセス制御
 
@@ -98,9 +100,14 @@ export REQUIRE_TAILSCALE_AUTH=true  # Tailscale認証（デフォルト: true）
 
 ```
 nano-board/
-├── app.py              # Flaskアプリケーション本体
+├── app/                # アプリケーションパッケージ
+│   ├── __init__.py     # アプリケーションファクトリ
+│   ├── services/       # バックグラウンドサービス
+│   └── utils/          # ユーティリティ
+├── run.py              # エントリーポイント
 ├── requirements.txt    # 依存ライブラリ
 ├── static/             # 静的ファイル (CSS, JS, Images)
+└── templates/          # HTMLテンプレート
 ```
 
 ## 注意事項
