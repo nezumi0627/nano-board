@@ -103,13 +103,16 @@ def create_app():
                 "messages": [{"role": "user", "content": message}]
             }
             
-            resp = requests.post(url, json=payload, headers=headers, timeout=60)
+            # Timeout increased to 300s for slower local models
+            resp = requests.post(url, json=payload, headers=headers, timeout=300)
             if resp.status_code == 200:
                 rdata = resp.json()
                 content = rdata['choices'][0]['message']['content']
                 emit('test_chat_response', {'content': content})
             else:
                 emit('test_chat_response', {'error': f"API Error: {resp.status_code} - {resp.text}"})
+        except requests.exceptions.Timeout:
+            emit('test_chat_response', {'error': "Request Timed Out: The model took too long to respond. Please try again or check the server."})
         except Exception as e:
             emit('test_chat_response', {'error': f"Request Failed: {str(e)}"})
 

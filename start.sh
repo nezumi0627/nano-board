@@ -1,107 +1,138 @@
 #!/bin/bash
-# Nanobot Dashboard起動スクリプト
+# Nanobot Dashboard 起動スクリプト（Tailscale + jq 自動対応）
 
-cd "$(dirname "$0")"
+set -Eeuo pipefail
 
+BASE_DIR="$(cd "$(dirname "$0")" && pwd)"
+cd "$BASE_DIR"
+
+# ==========================================
 # ログ設定
+# ==========================================
 mkdir -p logs
 LOG_FILE="logs/dashboard_$(date +%Y%m%d_%H%M%S).log"
-LATEST_LOG="logs/latest.log"
-ln -sf "$(basename "$LOG_FILE")" "$LATEST_LOG"
+ln -sf "$(basename "$LOG_FILE")" logs/latest.log
 
-echo "=== Starting Nanobot Console at $(date) ===" | tee -a "$LOG_FILE"
+log() {
+    echo "[$(date '+%F %T')] $*" | tee -a "$LOG_FILE"
+}
 
-# ユーザーにsudoパスワード入力を促す (バックグラウンド実行前に認証を済ませる)
+log "=== Starting Nanobot Console ==="
+
+# sudo 認証
 sudo -v
 
 # ==========================================
-# 1. 既存プロセスのクリーンアップ
+# 0. jq 自動インストール
 # ==========================================
-echo "Checking for existing processes..." | tee -a "$LOG_FILE"
+if ! command -v jq >/dev/null 2>&1; then
+    log "jq not found, installing..."
 
-# Port 5000 (Dashboard) を使用しているプロセスを終了
-if sudo lsof -i :5000 -t >/dev/null 2>&1; then
-    echo "Killing process on port 5000..." | tee -a "$LOG_FILE"
-    PID=$(sudo lsof -i :5000 -t)
-    sudo kill $PID 2>/dev/null
-    sleep 2
-    # まだ生きていれば強制終了
-    if sudo lsof -i :5000 -t >/dev/null 2>&1; then
-         sudo kill -9 $PID 2>/dev/null
+    if command -v apt >/dev/null 2>&1; then
+        sudo apt update >>"$LOG_FILE" 2>&1
+        sudo apt install -y jq >>"$LOG_FILE" 2>&1
+        log "jq installed successfully"
+    else
+        log "❌ jq not found and apt is unavailable. Please install jq manually."
+        exit 1
     fi
+else
+    log "jq already installed"
 fi
 
-# 既存の tailscale funnel を終了
-if pgrep -f "tailscale funnel" >/dev/null; then
-    echo "Killing existing tailscale funnel..." | tee -a "$LOG_FILE"
-    sudo pkill -f "tailscale funnel"
+# ==========================================
+# 1. Tailscale 準備
+# ==========================================
+log "Checking tailscaled service..."
+
+if ! systemctl is-active --quiet tailscaled; then
+    log "Starting tailscaled"
+    sudo systemctl enable --now tailscaled
 fi
 
-echo "Cleanup complete." | tee -a "$LOG_FILE"
+if ! tailscale status >/dev/null 2>&1; then
+    log "Running tailscale up"
+    sudo tailscale up
+fi
+
+# serve（旧CLI互換）
+if ! pgrep -f "tailscale serve.*localhost:5000" >/dev/null; then
+    log "Starting Tailscale Serve (bg -> localhost:5000)"
+    sudo tailscale serve --bg localhost:5000
+else
+    log "Tailscale Serve already running"
+fi
+
+# funnel
+if ! tailscale funnel status 2>/dev/null | grep -qi "on"; then
+    log "Enabling Tailscale Funnel"
+    sudo tailscale funnel on
+else
+    log "Tailscale Funnel already enabled"
+fi
 
 # ==========================================
-# 2. サービスの起動
+# 2. クリーンアップ（アプリのみ）
 # ==========================================
+log "Cleaning port 5000 (local app only)"
 
-# Tailscale Funnelの有効化
-echo "Starting Tailscale Funnel on port 5000..." | tee -a "$LOG_FILE"
-# Funnelをバックグラウンドで実行
-sudo tailscale funnel 5000 > /dev/null 2>&1 &
-TAILSCALE_PID=$!
+PIDS=$(lsof -ti :5000 || true)
+if [[ -n "$PIDS" ]]; then
+    log "Killing existing app processes: $PIDS"
+    kill $PIDS || true
+    sleep 1
+    kill -9 $PIDS 2>/dev/null || true
+fi
 
-# スクリプト終了時にTailscale Funnelも終了させる
-cleanup() {
-    echo "Stopping Tailscale Funnel..." | tee -a "$LOG_FILE"
-    if [ -n "$TAILSCALE_PID" ]; then
-        sudo kill $TAILSCALE_PID 2>/dev/null
-    fi
-    # このスクリプトの子プロセスを全て終了させる
-    pkill -P $$
-}
-trap cleanup EXIT
+# ==========================================
+# 3. Python アプリ起動
+# ==========================================
+if [[ ! -d venv ]]; then
+    log "❌ venv not found"
+    exit 1
+fi
 
-# アプリケーション起動
-echo "Starting Flask Application..." | tee -a "$LOG_FILE"
 source venv/bin/activate
-# 依存関係の確認とインストール
-pip install -r requirements.txt | tee -a "$LOG_FILE"
-pip install setuptools | tee -a "$LOG_FILE"
 
-# -u: Unbuffered output for real-time logging
-# バックグラウンドで起動して監視できるようにする
-python3 -u app.py 2>&1 | tee -a "$LOG_FILE" &
+if [[ requirements.txt -nt venv/.requirements_installed ]]; then
+    log "Installing Python dependencies"
+    pip install --upgrade pip setuptools >>"$LOG_FILE" 2>&1
+    pip install -r requirements.txt >>"$LOG_FILE" 2>&1
+    touch venv/.requirements_installed
+else
+    log "Dependencies OK"
+fi
+
+log "Starting Flask Application"
+python3 -u app.py >>"$LOG_FILE" 2>&1 &
 APP_PID=$!
 
 # ==========================================
-# 3. 起動時チェック
+# 4. 起動確認
 # ==========================================
-echo "Waiting for application to start..." | tee -a "$LOG_FILE"
-
-# 最大30秒待機
-MAX_RETRIES=30
-for ((i=1; i<=MAX_RETRIES; i++)); do
-    if curl -s http://localhost:5000 >/dev/null; then
-        echo "" | tee -a "$LOG_FILE"
-        echo "✅ Dashboard is up and running!" | tee -a "$LOG_FILE"
-        echo "   Local: http://localhost:5000" | tee -a "$LOG_FILE"
+for i in {1..30}; do
+    if curl -sf http://localhost:5000 >/dev/null; then
+        DNS=$(tailscale status --json 2>/dev/null | jq -r '.Self.DNSName // empty')
+        log "✅ Dashboard is running"
+        log "   Local     : http://localhost:5000"
+        [[ -n "$DNS" ]] && log "   Tailscale : https://$DNS"
         break
     fi
-    
-    # プロセスが終了していないかチェック
-    if ! kill -0 $APP_PID 2>/dev/null; then
-        echo "" | tee -a "$LOG_FILE"
-        echo "❌ Dashboard failed to start! Check logs." | tee -a "$LOG_FILE"
+
+    if ! kill -0 "$APP_PID" 2>/dev/null; then
+        log "❌ App crashed"
         exit 1
     fi
-    
-    echo -n "." | tee -a "$LOG_FILE"
     sleep 1
 done
 
-if [ $i -gt $MAX_RETRIES ]; then
-    echo "" | tee -a "$LOG_FILE"
-    echo "⚠️  Dashboard startup timed out, but process is still running." | tee -a "$LOG_FILE"
-fi
+# ==========================================
+# 5. 終了処理
+# ==========================================
+cleanup() {
+    log "Stopping application..."
+    kill "$APP_PID" 2>/dev/null || true
+}
+trap cleanup EXIT
 
-# アプリプロセスの終了を待機（これでスクリプトは終了せず走り続ける）
-wait $APP_PID
+wait "$APP_PID"

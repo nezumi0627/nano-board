@@ -28,7 +28,7 @@ class ProcessService:
         # ここでは直接tmuxコマンドを発行する
         # ※ 実際の起動コマンドはユーザー環境に依存するが、
         # start-nanobot.sh があると仮定してそれを呼び出すのが安全
-        script_path = os.path.expanduser("~/start-nanobot.sh")
+        script_path = os.path.expanduser("~/nano-board/start-nanobot.sh")
         if os.path.exists(script_path):
              # バックグラウンドで実行
             return self._run_cmd(f"bash {script_path}"), "Started via script"
