@@ -1,0 +1,1535 @@
+<!DOCTYPE html>
+<html lang="ja" id="htmlRoot">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#000000" id="themeColor">
+<title>Nanobot Console</title>
+
+<!-- Alpine.js -->
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
+<!-- GSAP -->
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/gsap.min.js"></script>
+<!-- Lucide Icons -->
+<script src="https://cdn.jsdelivr.net/npm/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800;14..32,900&display=swap" rel="stylesheet">
+
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg-primary: #F2F2F7;
+  --bg-elevated: #FFFFFF;
+  --bg-secondary: #FFFFFF;
+  --separator: rgba(60, 60, 67, 0.09);
+  --label-primary: #1C1C1E;
+  --label-secondary: rgba(60, 60, 67, 0.55);
+  --label-tertiary: rgba(60, 60, 67, 0.28);
+  --fill-primary: rgba(120, 120, 128, 0.16);
+  --fill-secondary: rgba(120, 120, 128, 0.12);
+  --fill-tertiary: rgba(120, 120, 128, 0.08);
+  --tint: #007AFF;
+  --tint-soft: rgba(0, 122, 255, 0.1);
+  --green: #34C759;
+  --green-soft: rgba(52, 199, 89, 0.12);
+  --red: #FF3B30;
+  --red-soft: rgba(255, 59, 48, 0.12);
+  --orange: #FF9500;
+  --orange-soft: rgba(255, 149, 0, 0.12);
+  --purple: #AF52DE;
+  --purple-soft: rgba(175, 82, 222, 0.12);
+  --cyan: #32ADE6;
+  --nav-blur: rgba(242, 242, 247, 0.78);
+  --card-shadow: 0 0 0 0.5px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.04);
+  --radius: 12px;
+  --spring: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-out: cubic-bezier(0, 0, 0.15, 1);
+  color-scheme: light;
+}
+
+html.dark {
+  --bg-primary: #000000;
+  --bg-elevated: #1C1C1E;
+  --bg-secondary: #1C1C1E;
+  --separator: rgba(84, 84, 88, 0.36);
+  --label-primary: #F5F5F7;
+  --label-secondary: rgba(235, 235, 245, 0.55);
+  --label-tertiary: rgba(235, 235, 245, 0.25);
+  --fill-primary: rgba(120, 120, 128, 0.32);
+  --fill-secondary: rgba(120, 120, 128, 0.24);
+  --fill-tertiary: rgba(120, 120, 128, 0.16);
+  --tint: #0A84FF;
+  --tint-soft: rgba(10, 132, 255, 0.18);
+  --green: #30D158;
+  --green-soft: rgba(48, 209, 88, 0.18);
+  --red: #FF453A;
+  --red-soft: rgba(255, 69, 58, 0.18);
+  --orange: #FF9F0A;
+  --orange-soft: rgba(255, 159, 10, 0.18);
+  --purple: #BF5AF2;
+  --purple-soft: rgba(191, 90, 242, 0.18);
+  --cyan: #64D2FF;
+  --nav-blur: rgba(22, 22, 22, 0.82);
+  --card-shadow: 0 0 0 0.5px rgba(255,255,255,0.05);
+  color-scheme: dark;
+}
+
+html {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  background: var(--bg-primary);
+  color: var(--label-primary);
+  overflow-x: hidden;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  transition: background 0.3s ease, color 0.3s ease;
+}
+body {
+  min-height: 100dvh;
+  overscroll-behavior-y: contain;
+  background: var(--bg-primary);
+  color: var(--label-primary);
+}
+
+/* ===========================
+   Top Bar
+   =========================== */
+.top-bar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--nav-blur);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border-bottom: 0.5px solid var(--separator);
+  padding-top: env(safe-area-inset-top, 0);
+}
+.top-bar-inner {
+  max-width: 720px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+  min-height: 44px;
+}
+.top-title {
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.4px;
+  color: var(--label-primary);
+}
+.top-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.icon-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--tint);
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.12s ease, transform 0.12s ease;
+}
+.icon-btn:hover { background: var(--fill-tertiary); }
+.icon-btn:active { transform: scale(0.88); opacity: 0.6; }
+.icon-btn svg { width: 20px; height: 20px; stroke-width: 1.8; }
+
+/* ===========================
+   Content Area
+   =========================== */
+.content-area {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 12px 16px calc(90px + env(safe-area-inset-bottom, 20px));
+}
+@media (min-width: 720px) {
+  .content-area { padding: 20px 24px calc(90px + 20px); }
+}
+
+/* ===========================
+   Section Label
+   =========================== */
+.section-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--label-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  padding: 16px 4px 6px;
+}
+.section-label:first-child { padding-top: 4px; }
+
+/* ===========================
+   Card
+   =========================== */
+.card {
+  background: var(--bg-elevated);
+  border-radius: var(--radius);
+  box-shadow: var(--card-shadow);
+  overflow: hidden;
+}
+.card + .section-label { padding-top: 24px; }
+.card + .card { margin-top: 12px; }
+
+/* ===========================
+   Hero Status
+   =========================== */
+.hero {
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.hero-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.4s var(--ease-out);
+}
+.hero-icon svg { width: 24px; height: 24px; stroke-width: 1.8; }
+.hero-body { flex: 1; min-width: 0; }
+.hero-name {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+  line-height: 1.2;
+}
+.hero-sub {
+  font-size: 13px;
+  color: var(--label-secondary);
+  margin-top: 2px;
+  letter-spacing: -0.1px;
+}
+.hero-footer {
+  padding: 0 20px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 100px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.1px;
+  transition: background 0.3s, color 0.3s;
+}
+.pill-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+@keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+.pill-dot.live { animation: pulse-dot 2s ease-in-out infinite; }
+.ts-label {
+  font-size: 12px;
+  color: var(--label-tertiary);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.1px;
+}
+
+/* ===========================
+   Gauges
+   =========================== */
+.gauges {
+  display: flex;
+  justify-content: center;
+  gap: 36px;
+  padding: 24px 20px 20px;
+}
+@media (min-width: 720px) { .gauges { gap: 56px; } }
+.gauge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.gauge-ring-wrap {
+  position: relative;
+  width: 84px;
+  height: 84px;
+}
+@media (min-width: 720px) { .gauge-ring-wrap { width: 100px; height: 100px; } }
+.gauge-ring-wrap svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.gauge-track { fill: none; stroke: var(--fill-tertiary); stroke-width: 4.5; }
+.gauge-value { fill: none; stroke-width: 4.5; stroke-linecap: round; transition: stroke-dashoffset 1s var(--spring), stroke 0.4s ease; }
+.gauge-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+  color: var(--label-primary);
+  font-variant-numeric: tabular-nums;
+}
+@media (min-width: 720px) { .gauge-center { font-size: 17px; } }
+.gauge-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--label-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+/* ===========================
+   List Rows (iOS style)
+   =========================== */
+.row {
+  display: flex;
+  align-items: center;
+  padding: 11px 16px;
+  min-height: 44px;
+  gap: 12px;
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
+  transition: background 0.08s ease;
+}
+.row:active { background: var(--fill-tertiary); }
+.row + .row::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 56px;
+  right: 0;
+  height: 0.5px;
+  background: var(--separator);
+}
+.row-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.row-icon svg { width: 15px; height: 15px; color: #fff; stroke-width: 2; }
+.row-body { flex: 1; min-width: 0; }
+.row-title {
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--label-primary);
+  letter-spacing: -0.2px;
+}
+.row-caption {
+  font-size: 12px;
+  color: var(--label-tertiary);
+  margin-top: 1px;
+}
+.row-end {
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--label-secondary);
+  flex-shrink: 0;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.2px;
+}
+.row-end.mono {
+  font-family: 'SF Mono', 'Menlo', 'Consolas', ui-monospace, monospace;
+  font-size: 14px;
+}
+
+/* ===========================
+   Stats Grid
+   =========================== */
+.stat-grid { display: grid; grid-template-columns: 1fr 1fr; }
+.stat-cell {
+  padding: 16px;
+  text-align: center;
+  position: relative;
+}
+.stat-cell:nth-child(odd)::after {
+  content: '';
+  position: absolute;
+  top: 12px; bottom: 12px; right: 0;
+  width: 0.5px;
+  background: var(--separator);
+}
+.stat-cell:nth-child(1), .stat-cell:nth-child(2) {
+  border-bottom: 0.5px solid var(--separator);
+}
+.stat-num {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.8px;
+  color: var(--label-primary);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+.stat-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--label-secondary);
+  margin-top: 4px;
+  letter-spacing: -0.1px;
+}
+
+/* ===========================
+   Channel Badge Row
+   =========================== */
+.ch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  min-height: 44px;
+  position: relative;
+}
+.ch-row + .ch-row::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 16px; right: 16px;
+  height: 0.5px;
+  background: var(--separator);
+}
+.ch-left { display: flex; align-items: center; gap: 10px; }
+.ch-dot { width: 8px; height: 8px; border-radius: 50%; transition: background 0.3s ease; }
+.ch-label { font-size: 15px; color: var(--label-primary); letter-spacing: -0.2px; }
+.ch-badge {
+  padding: 3px 10px;
+  border-radius: 100px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+/* ===========================
+   Error State
+   =========================== */
+.error-card { padding: 24px 20px; }
+.error-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.error-badge {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  background: var(--red-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.error-badge svg { width: 18px; height: 18px; color: var(--red); stroke-width: 2; }
+.error-title { font-size: 15px; font-weight: 600; color: var(--label-primary); margin-bottom: 2px; }
+.error-msg { font-size: 13px; color: var(--label-secondary); line-height: 1.4; }
+.btn-primary {
+  width: 100%;
+  padding: 12px 20px;
+  border-radius: 12px;
+  border: none;
+  background: var(--tint);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.1s ease, opacity 0.1s ease;
+}
+.btn-primary:active { transform: scale(0.97); opacity: 0.8; }
+
+/* ===========================
+   Placeholder / Empty
+   =========================== */
+.placeholder { text-align: center; padding: 36px 20px; }
+.placeholder-icon {
+  width: 52px; height: 52px;
+  border-radius: 16px;
+  background: var(--fill-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 14px;
+}
+.placeholder-icon svg { width: 24px; height: 24px; color: var(--label-tertiary); stroke-width: 1.8; }
+.placeholder-title {
+  font-size: 16px; font-weight: 600;
+  color: var(--label-primary);
+  margin-bottom: 4px;
+  letter-spacing: -0.2px;
+}
+.placeholder-sub {
+  font-size: 14px;
+  color: var(--label-secondary);
+  line-height: 1.45;
+  letter-spacing: -0.1px;
+}
+
+/* ===========================
+   Skeleton
+   =========================== */
+@keyframes shimmer {
+  0% { background-position: -300% 0; }
+  100% { background-position: 300% 0; }
+}
+.skel {
+  background: linear-gradient(90deg, var(--fill-tertiary) 0%, var(--fill-secondary) 40%, var(--fill-tertiary) 80%);
+  background-size: 300% 100%;
+  animation: shimmer 1.8s ease infinite;
+  border-radius: 6px;
+}
+
+/* ===========================
+   Bottom Tab Bar
+   =========================== */
+.tab-bar {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  z-index: 100;
+  background: var(--nav-blur);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border-top: 0.5px solid var(--separator);
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+.tab-bar-row {
+  display: flex;
+  max-width: 720px;
+  margin: 0 auto;
+}
+.tab-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 7px 0 5px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--label-tertiary);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.15s ease;
+  position: relative;
+}
+.tab-btn svg {
+  width: 22px; height: 22px;
+  stroke-width: 1.6;
+  transition: color 0.15s ease;
+}
+.tab-btn.active { color: var(--tint); font-weight: 600; }
+.tab-btn:active { opacity: 0.5; }
+.tab-btn.active::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--tint);
+}
+
+/* ===========================
+   Panels
+   =========================== */
+.panel { display: none; }
+.panel.active { display: block; opacity: 1; }
+
+/* ===========================
+   Info Page Styles
+   =========================== */
+.info-header {
+  height: 110px;
+  background: linear-gradient(135deg, var(--tint-soft) 0%, var(--purple-soft) 100%);
+  position: relative;
+  border-radius: var(--radius) var(--radius) 0 0;
+}
+.info-header-brand {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 0.08;
+  font-size: 42px;
+  font-weight: 900;
+  letter-spacing: -2px;
+  color: var(--label-primary);
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+}
+.info-avatar-wrap {
+  position: absolute;
+  bottom: 0;
+  left: 24px;
+  transform: translateY(50%);
+  z-index: 2;
+}
+.info-avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 18px;
+  background: var(--tint);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  font-weight: 800;
+  color: #fff;
+  border: 3.5px solid var(--bg-elevated);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+}
+.info-body {
+  padding: 48px 24px 24px;
+}
+.info-name {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: var(--label-primary);
+  line-height: 1.2;
+}
+.info-name-sub {
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--label-secondary);
+  margin-left: 4px;
+}
+.info-role {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--tint);
+  margin-top: 2px;
+}
+.info-social {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+.info-social-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--fill-tertiary);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--label-primary);
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+.info-social-btn:hover { background: var(--tint-soft); color: var(--tint); }
+.info-social-btn:active { transform: scale(0.9); }
+.info-social-btn svg { width: 16px; height: 16px; }
+.info-about {
+  background: var(--fill-tertiary);
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 16px;
+}
+.info-about-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.info-about-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  background: var(--tint-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.info-about-icon svg { width: 14px; height: 14px; color: var(--tint); }
+.info-about-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--label-secondary);
+}
+.info-about-text {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--label-primary);
+  line-height: 1.5;
+  letter-spacing: -0.1px;
+}
+.info-about-desc {
+  font-size: 12px;
+  color: var(--label-secondary);
+  line-height: 1.5;
+  margin-top: 6px;
+}
+.info-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+.info-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--fill-tertiary);
+  padding: 6px 12px;
+  border-radius: 100px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--label-primary);
+}
+.info-meta-item svg { width: 13px; height: 13px; color: var(--label-secondary); }
+.info-meta-badge {
+  padding: 2px 8px;
+  border-radius: 100px;
+  font-size: 10px;
+  font-weight: 700;
+  border: 1px solid var(--tint-soft);
+  color: var(--tint);
+  letter-spacing: 0.04em;
+}
+.info-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 0.5px solid var(--separator);
+}
+.info-footer-brand {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: -0.4px;
+  color: var(--label-primary);
+}
+.info-footer-ver {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+.info-footer-ver-label {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--label-tertiary);
+}
+.info-footer-ver-val {
+  font-size: 12px;
+  font-family: 'SF Mono', 'Menlo', 'Consolas', ui-monospace, monospace;
+  font-weight: 600;
+  background: var(--fill-tertiary);
+  padding: 3px 10px;
+  border-radius: 6px;
+  margin-top: 3px;
+  color: var(--label-primary);
+}
+
+/* ===========================
+   Utility
+   =========================== */
+.hidden { display: none !important; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+::-webkit-scrollbar { width: 0; height: 0; }
+.pressable { transition: transform 0.1s ease; }
+.pressable:active { transform: scale(0.97); }
+
+/* ===========================
+   Update indicator (inline)
+   =========================== */
+.updating-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--tint);
+  display: inline-block;
+  margin-left: 6px;
+  vertical-align: middle;
+  animation: pulse-dot 1s ease-in-out infinite;
+}
+
+  /* ===========================
+     Toast / Notification
+     =========================== */
+  .toast-container {
+    position: fixed;
+    bottom: calc(20px + env(safe-area-inset-bottom));
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    pointer-events: none;
+  }
+  .toast {
+    background: var(--bg-elevated);
+    border: 0.5px solid var(--separator);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    border-radius: 999px;
+    padding: 10px 16px 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    pointer-events: auto;
+    max-width: 90vw;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--label-primary);
+  }
+  .toast-btn {
+    background: var(--tint);
+    color: #fff;
+    border: none;
+    border-radius: 99px;
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+</style>
+</head>
+
+<body x-data="app()" x-init="init()">
+
+<div class="toast-container">
+  <template x-if="updateAvailable">
+    <div class="toast" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
+      <i data-lucide="refresh-cw" class="w-4 h-4 text-tint"></i>
+      <span>更新が利用可能です</span>
+      <button class="toast-btn" @click="applyUpdate">更新</button>
+    </div>
+  </template>
+</div>
+
+  <!-- ===== Top Bar ===== -->
+  <header class="top-bar">
+    <div class="top-bar-inner">
+      <span class="top-title">
+        Nanobot Console
+        <span class="updating-dot" x-show="updating" style="display:none;"></span>
+      </span>
+      <div class="top-actions">
+        <button class="icon-btn" @click="toggleTheme()" :aria-label="isDark ? 'Light' : 'Dark'">
+          <template x-if="!isDark"><i data-lucide="sun"></i></template>
+          <template x-if="isDark"><i data-lucide="moon"></i></template>
+        </button>
+        <button class="icon-btn" @click="checkForUpdate()" aria-label="Update">
+          <i data-lucide="download"></i>
+        </button>
+        <button class="icon-btn" @click="refresh()" aria-label="Refresh">
+          <i data-lucide="rotate-cw" :style="{ transform: 'rotate(' + refreshDeg + 'deg)', transition: 'transform 0.6s cubic-bezier(0.22,1,0.36,1)' }"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== Content ===== -->
+  <main class="content-area">
+
+    <!-- Loading Skeleton (first load only) -->
+    <template x-if="firstLoad">
+      <div>
+        <div class="card" style="margin-bottom:12px;">
+          <div style="padding:20px;display:flex;align-items:center;gap:16px;">
+            <div class="skel" style="width:52px;height:52px;border-radius:14px;flex-shrink:0;"></div>
+            <div style="flex:1;">
+              <div class="skel" style="height:16px;width:60%;margin-bottom:8px;"></div>
+              <div class="skel" style="height:12px;width:40%;"></div>
+            </div>
+          </div>
+        </div>
+        <div class="card" style="margin-bottom:12px;">
+          <div style="padding:24px;display:flex;justify-content:center;gap:36px;">
+            <div class="skel" style="width:84px;height:84px;border-radius:50%;"></div>
+            <div class="skel" style="width:84px;height:84px;border-radius:50%;"></div>
+          </div>
+        </div>
+        <div class="card">
+          <template x-for="i in 3"><div style="padding:14px 16px;display:flex;gap:12px;align-items:center;">
+            <div class="skel" style="width:30px;height:30px;border-radius:7px;flex-shrink:0;"></div>
+            <div class="skel" style="height:14px;flex:1;"></div>
+            <div class="skel" style="width:48px;height:14px;"></div>
+          </div></template>
+        </div>
+      </div>
+    </template>
+
+    <!-- Error -->
+    <template x-if="error && !firstLoad">
+      <div class="card error-card">
+        <div class="error-row">
+          <div class="error-badge"><i data-lucide="alert-circle"></i></div>
+          <div>
+            <div class="error-title">Connection Error</div>
+            <div class="error-msg" x-text="error"></div>
+          </div>
+        </div>
+        <button class="btn-primary pressable" @click="fetchData()">Retry</button>
+      </div>
+    </template>
+
+    <!-- ===== Overview Tab ===== -->
+    <div class="panel" :class="{ active: tab === 'overview' }" x-ref="panelOverview">
+      <template x-if="data">
+        <div>
+          <!-- Status Hero -->
+          <div class="card" style="margin-bottom:12px;">
+            <div class="hero">
+              <div class="hero-icon" :style="{ background: data.process.running ? 'var(--green-soft)' : 'var(--red-soft)' }">
+                <i data-lucide="bot" :style="{ color: data.process.running ? 'var(--green)' : 'var(--red)' }"></i>
+              </div>
+              <div class="hero-body">
+                <div class="hero-name">Nanobot Console</div>
+                <div class="hero-sub" x-text="'Last: ' + fmtTs(data.timestamp)"></div>
+              </div>
+            </div>
+            <div class="hero-footer">
+              <span class="pill" :style="{ background: data.process.running ? 'var(--green-soft)' : 'var(--red-soft)', color: data.process.running ? 'var(--green)' : 'var(--red)' }">
+                <span class="pill-dot" :class="{ live: data.process.running }" :style="{ background: data.process.running ? 'var(--green)' : 'var(--red)' }"></span>
+                <span x-text="data.process.running ? 'Running' : 'Stopped'"></span>
+              </span>
+              <span class="ts-label" x-text="tailscaleLabel()"></span>
+            </div>
+          </div>
+
+          <!-- Gauges -->
+          <template x-if="data.process.running">
+            <div class="card" style="margin-bottom:12px;">
+              <div class="gauges">
+                <div class="gauge">
+                  <div class="gauge-ring-wrap">
+                    <svg viewBox="0 0 80 80">
+                      <circle class="gauge-track" cx="40" cy="40" r="34"/>
+                      <circle class="gauge-value" cx="40" cy="40" r="34"
+                        :stroke="cpuColor(data.process.cpu_percent)"
+                        stroke-dasharray="213.63"
+                        :stroke-dashoffset="213.63 - (clamp(data.process.cpu_percent, 0, 100) / 100) * 213.63"
+                      />
+                    </svg>
+                    <span class="gauge-center" x-text="data.process.cpu_percent.toFixed(1) + '%'"></span>
+                  </div>
+                  <span class="gauge-name">CPU</span>
+                </div>
+                <div class="gauge">
+                  <div class="gauge-ring-wrap">
+                    <svg viewBox="0 0 80 80">
+                      <circle class="gauge-track" cx="40" cy="40" r="34"/>
+                      <circle class="gauge-value" cx="40" cy="40" r="34"
+                        :stroke="memColor(memPercent(data.process.memory_percent))"
+                        stroke-dasharray="213.63"
+                        :stroke-dashoffset="213.63 - (memPercent(data.process.memory_percent) / 100) * 213.63"
+                      />
+                    </svg>
+                    <span class="gauge-center" x-text="fmtMem(data.process.memory_mb)"></span>
+                  </div>
+                  <span class="gauge-name">Memory</span>
+                </div>
+              </div>
+            </div>
+          </template>
+
+          <!-- Process Info -->
+          <template x-if="data.process.running">
+            <div>
+              <div class="section-label">Process</div>
+              <div class="card">
+                <div class="row">
+                  <div class="row-icon" style="background:#5856D6;"><i data-lucide="hash"></i></div>
+                  <span class="row-title">PID</span>
+                  <span class="row-end mono" x-text="data.process.pid || 'N/A'"></span>
+                </div>
+                <div class="row">
+                  <div class="row-icon" :style="{ background: cpuColor(data.process.cpu_percent) }"><i data-lucide="cpu"></i></div>
+                  <span class="row-title">CPU</span>
+                  <span class="row-end" :style="{ color: cpuColor(data.process.cpu_percent) }" x-text="data.process.cpu_percent.toFixed(1) + '%'"></span>
+                </div>
+                <div class="row">
+                  <div class="row-icon" :style="{ background: memColor(memPercent(data.process.memory_percent)) }"><i data-lucide="database"></i></div>
+                  <span class="row-title">Memory</span>
+                  <span class="row-end" :style="{ color: memColor(memPercent(data.process.memory_percent)) }" x-text="fmtMem(data.process.memory_mb) + ' (' + (data.process.memory_percent?.toFixed(1) || '0.0') + '%)'"></span>
+                </div>
+                <div class="row">
+                  <div class="row-icon" style="background:var(--cyan);"><i data-lucide="clock"></i></div>
+                  <span class="row-title">Uptime</span>
+                  <span class="row-end" x-text="fmtUptime(data.process.uptime_seconds)"></span>
+                </div>
+              </div>
+            </div>
+          </template>
+
+          <!-- Stopped -->
+          <template x-if="!data.process.running">
+            <div class="card">
+              <div class="placeholder">
+                <div class="placeholder-icon"><i data-lucide="power"></i></div>
+                <div class="placeholder-title">Process Stopped</div>
+                <div class="placeholder-sub">Nanobot is not running</div>
+              </div>
+            </div>
+          </template>
+
+          <!-- Stats -->
+          <div class="section-label">Stats</div>
+          <div class="card">
+            <div class="stat-grid">
+              <div class="stat-cell">
+                <div class="stat-num" x-text="data.sessions.count || 0"></div>
+                <div class="stat-name">Sessions</div>
+              </div>
+              <div class="stat-cell">
+                <div class="stat-num" x-text="data.sessions.messages || 0"></div>
+                <div class="stat-name">Messages</div>
+              </div>
+              <div class="stat-cell">
+                <div class="stat-num" x-text="data.cron_jobs.count || 0"></div>
+                <div class="stat-name">Cron</div>
+              </div>
+              <div class="stat-cell">
+                <div class="stat-num" x-text="enabledChannels()"></div>
+                <div class="stat-name">Channels</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
+    </div>
+
+    <!-- ===== Sessions Tab ===== -->
+    <div class="panel" :class="{ active: tab === 'sessions' }" x-ref="panelSessions">
+      <template x-if="data">
+        <div>
+          <div class="section-label" style="padding-top:4px;">Status</div>
+          <div class="card">
+            <div class="row">
+              <div class="row-icon" :style="{ background: sessColor() }">
+                <i data-lucide="activity"></i>
+              </div>
+              <div class="row-body">
+                <div class="row-title">Current State</div>
+                <div class="row-caption" x-text="sessLabel()"></div>
+              </div>
+              <span class="row-end" style="color:var(--tint);font-weight:600;" x-text="data.sessions.thinking_sessions || 0"></span>
+            </div>
+          </div>
+
+          <div class="section-label">Session Info</div>
+          <div class="card">
+            <div class="row">
+              <div class="row-icon" style="background:var(--tint);"><i data-lucide="users"></i></div>
+              <span class="row-title">Sessions</span>
+              <span class="row-end" x-text="data.sessions.count || '--'"></span>
+            </div>
+            <div class="row">
+              <div class="row-icon" style="background:#5856D6;"><i data-lucide="message-circle"></i></div>
+              <span class="row-title">Messages</span>
+              <span class="row-end" x-text="data.sessions.messages || '--'"></span>
+            </div>
+            <div class="row">
+              <div class="row-icon" style="background:var(--cyan);"><i data-lucide="calendar"></i></div>
+              <span class="row-title">Latest Activity</span>
+              <span class="row-end" x-text="fmtTs(data.sessions.latest)"></span>
+            </div>
+          </div>
+
+          <div class="section-label">Sessions</div>
+          <div class="card">
+            <template x-if="data.sessions.details && data.sessions.details.length">
+              <div>
+                <template x-for="(s, i) in data.sessions.details" :key="s.id">
+                  <div class="row">
+                    <div class="row-icon" style="background:var(--label-primary);"><i data-lucide="folder"></i></div>
+                    <div class="row-body">
+                      <div class="row-title" x-text="s.id"></div>
+                      <div class="row-caption" x-text="'Latest: ' + fmtTs(s.latest)"></div>
+                    </div>
+                    <span class="row-end" x-text="s.messages + ' msgs'"></span>
+                  </div>
+                </template>
+              </div>
+            </template>
+            <template x-if="!data.sessions.details || data.sessions.details.length === 0">
+              <div class="placeholder">
+                <div class="placeholder-icon"><i data-lucide="inbox"></i></div>
+                <div class="placeholder-title">No Session Details</div>
+                <div class="placeholder-sub">セッションが存在しません</div>
+              </div>
+            </template>
+          </div>
+        </div>
+      </template>
+    </div>
+
+    <!-- ===== Config Tab ===== -->
+    <div class="panel" :class="{ active: tab === 'config' }" x-ref="panelConfig">
+      <template x-if="data">
+        <div>
+          <div class="section-label" style="padding-top:4px;">General</div>
+          <div class="card">
+            <div class="row">
+              <div class="row-icon" style="background:var(--orange);"><i data-lucide="radio"></i></div>
+              <span class="row-title">Gateway</span>
+              <span class="row-end mono" x-text="(data.config.gateway.host || '-') + ':' + (data.config.gateway.port || '-')"></span>
+            </div>
+            <div class="row">
+              <div class="row-icon" style="background:#5856D6;"><i data-lucide="layers"></i></div>
+              <span class="row-title">Model</span>
+              <span class="row-end" x-text="data.config.model ? data.config.model.split('/').pop() : 'N/A'"></span>
+            </div>
+          </div>
+
+          <!-- Channels -->
+          <template x-if="data.config.channels && Object.keys(data.config.channels).length > 0">
+            <div>
+              <div class="section-label">Channels</div>
+              <div class="card">
+                <template x-for="(ch, key) in data.config.channels" :key="key">
+                  <div class="ch-row">
+                    <div class="ch-left">
+                      <span class="ch-dot" :style="{ background: ch.enabled ? 'var(--green)' : 'var(--label-tertiary)' }"></span>
+                      <span class="ch-label" x-text="key"></span>
+                    </div>
+                    <span class="ch-badge" :style="{ background: ch.enabled ? 'var(--green-soft)' : 'var(--fill-tertiary)', color: ch.enabled ? 'var(--green)' : 'var(--label-tertiary)' }" x-text="ch.enabled ? 'ON' : 'OFF'"></span>
+                  </div>
+                </template>
+              </div>
+            </div>
+          </template>
+
+          <!-- Cron -->
+          <div class="section-label">Schedule</div>
+          <div class="card">
+            <template x-if="data.cron_jobs.jobs && data.cron_jobs.jobs.length > 0">
+              <div>
+                <template x-for="(job, idx) in data.cron_jobs.jobs" :key="job.id || idx">
+                  <div class="row" :style="{ opacity: job.enabled !== false ? 1 : 0.45 }">
+                    <div class="row-icon" style="background:var(--orange);"><i data-lucide="timer"></i></div>
+                    <div class="row-body">
+                      <div class="row-title" x-text="job.name || job.id || '--'"></div>
+                      <div class="row-caption" x-text="job.expr || '--'"></div>
+                    </div>
+                    <div style="flex-shrink:0;text-align:right;">
+                      <div style="font-size:12px;color:var(--label-secondary);font-variant-numeric:tabular-nums;" x-text="'Next: ' + fmtTs(job.nextRunAtMs)"></div>
+                      <div style="font-size:11px;font-weight:600;" :style="{ color: job.lastStatus === 'ok' ? 'var(--green)' : 'var(--label-tertiary)' }" x-text="job.lastStatus || '--'"></div>
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </template>
+            <template x-if="!data.cron_jobs.jobs || data.cron_jobs.jobs.length === 0">
+              <div class="placeholder">
+                <div class="placeholder-icon"><i data-lucide="clock"></i></div>
+                <div class="placeholder-title">No Jobs</div>
+                <div class="placeholder-sub">Tell Nanobot to schedule a task to register one</div>
+              </div>
+            </template>
+          </div>
+        </div>
+      </template>
+    </div>
+
+    <!-- ===== Info Tab ===== -->
+    <div class="panel" :class="{ active: tab === 'info' }" x-ref="panelInfo">
+      <div class="card" style="margin-top:4px;">
+        <div class="info-header">
+          <div class="info-header-brand">NANOBOT CONSOLE</div>
+          <div class="info-avatar-wrap">
+            <img class="info-avatar" src="/static/avatar.png" alt="avatar">
+          </div>
+        </div>
+        <div class="info-body">
+          <!-- Profile -->
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+            <div>
+              <div class="info-name">
+                🐱 NanoBot
+              </div>
+              <div class="info-role">Running on <span x-text="data.process?.running ? 'PID ' + data.process.pid : 'Unknown'"></span></div>
+            </div>
+            <div class="info-social">
+              <a href="https://github.com/nezumi0627" target="_blank" rel="noopener noreferrer" class="info-social-btn" aria-label="GitHub">
+                <i data-lucide="github"></i>
+              </a>
+              <a href="https://x.com/nezum1n1um" target="_blank" rel="noopener noreferrer" class="info-social-btn" aria-label="X">
+                <svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:currentColor;"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+              </a>
+            </div>
+          </div>
+
+          <!-- About -->
+          <div class="info-about">
+            <div class="info-about-header">
+              <div class="info-about-icon"><i data-lucide="zap"></i></div>
+              <span class="info-about-label">System Stats</span>
+            </div>
+            <div class="space-y-2 mt-2">
+                <div class="flex justify-between text-sm">
+                    <span class="text-label-secondary">Uptime</span>
+                    <span class="font-medium" x-text="formatUptime(data.process?.uptime_seconds || 0)"></span>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <span class="text-label-secondary">Memory</span>
+                    <span class="font-medium">
+                        <span x-text="data.process?.memory_mb || 0"></span> MB
+                        (<span x-text="data.process?.memory_percent || 0"></span>%)
+                    </span>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <span class="text-label-secondary">CPU</span>
+                    <span class="font-medium"><span x-text="data.process?.cpu_percent || 0"></span>%</span>
+                </div>
+            </div>
+          </div>
+
+          <!-- Meta -->
+          <div class="info-meta">
+            <div class="info-meta-item">
+              <i data-lucide="calendar"></i>
+              <span style="color:var(--label-secondary);">Started:</span> 2026/02/06
+            </div>
+            <div class="info-meta-item">
+              <span class="info-meta-badge">OSS</span>
+              Nanobot Core v0.0.0
+            </div>
+          </div>
+
+          <!-- Footer -->
+          <div class="info-footer">
+            <span class="info-footer-brand">NANOBOT CONSOLE</span>
+            <div class="info-footer-ver">
+              <span class="info-footer-ver-label">Current Target</span>
+              <span class="info-footer-ver-val">v0.0.0</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Links -->
+      <div class="section-label">Links</div>
+      <div class="card">
+        <a href="https://github.com/nezumi0627/nanobot-dashboard" target="_blank" rel="noopener noreferrer" class="row" style="text-decoration:none;cursor:pointer;">
+          <div class="row-icon" style="background:#24292e;"><i data-lucide="github"></i></div>
+          <div class="row-body">
+            <div class="row-title">GitHub Repository</div>
+            <div class="row-caption">nezumi0627/nanobot-dashboard</div>
+          </div>
+          <i data-lucide="chevron-right" style="width:16px;height:16px;color:var(--label-tertiary);stroke-width:2;"></i>
+        </a>
+        <a href="https://x.com/nezum1n1um" target="_blank" rel="noopener noreferrer" class="row" style="text-decoration:none;cursor:pointer;">
+          <div class="row-icon" style="background:var(--label-primary);">
+            <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:#fff;"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+          </div>
+          <div class="row-body">
+            <div class="row-title">X (Twitter)</div>
+            <div class="row-caption">@nezum1n1um</div>
+          </div>
+          <i data-lucide="chevron-right" style="width:16px;height:16px;color:var(--label-tertiary);stroke-width:2;"></i>
+        </a>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ===== Bottom Tab Bar ===== -->
+  <nav class="tab-bar">
+    <div class="tab-bar-row">
+      <button class="tab-btn" :class="{ active: tab === 'overview' }" @click="switchTab('overview')">
+        <i data-lucide="layout-dashboard"></i>
+        <span>Overview</span>
+      </button>
+      <button class="tab-btn" :class="{ active: tab === 'sessions' }" @click="switchTab('sessions')">
+        <i data-lucide="message-square"></i>
+        <span>Sessions</span>
+      </button>
+      <button class="tab-btn" :class="{ active: tab === 'config' }" @click="switchTab('config')">
+        <i data-lucide="settings"></i>
+        <span>Config</span>
+      </button>
+      <button class="tab-btn" :class="{ active: tab === 'info' }" @click="switchTab('info')">
+        <i data-lucide="info"></i>
+        <span>Info</span>
+      </button>
+    </div>
+  </nav>
+
+<script>
+function app() {
+  return {
+    tab: 'overview',
+    isDark: true,
+    firstLoad: true,
+    data: null,
+    error: null,
+    refreshDeg: 0,
+    updating: false,
+    _interval: null,
+    _hasAnimatedInitial: false,
+    swReg: null,
+    updateAvailable: false,
+
+    init() {
+      /* Theme: read stored or use system preference */
+      var stored = localStorage.getItem('nanobot-theme');
+      if (stored) {
+        this.isDark = stored === 'dark';
+      } else {
+        this.isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      }
+      this.applyTheme();
+
+      this.fetchData();
+      this._interval = setInterval(() => this.fetchData(), 5000);
+
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js').then(reg => {
+          this.swReg = reg;
+          reg.onupdatefound = () => {
+            const installingWorker = reg.installing;
+            installingWorker.onstatechange = () => {
+              if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                 this.updateAvailable = true;
+                 this.$nextTick(() => this.reinitIcons());
+              }
+            };
+          };
+        });
+        
+        let refreshing;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          if (refreshing) return;
+          window.location.reload();
+          refreshing = true;
+        });
+      }
+
+      this.$nextTick(() => { this.reinitIcons(); });
+    },
+
+    applyUpdate() {
+      if (this.swReg && this.swReg.waiting) {
+        this.swReg.waiting.postMessage({ type: 'SKIP_WAITING' });
+      } else {
+          window.location.reload();
+      }
+    },
+
+    applyTheme() {
+      var html = document.getElementById('htmlRoot');
+      if (this.isDark) {
+        html.classList.add('dark');
+      } else {
+        html.classList.remove('dark');
+      }
+      var el = document.getElementById('themeColor');
+      if (el) el.content = this.isDark ? '#000000' : '#F2F2F7';
+    },
+
+    switchTab(name) {
+      if (this.tab === name) return;
+      var oldRef = 'panel' + this.capitalize(this.tab);
+      var oldPanel = this.$refs[oldRef];
+      var newName = name;
+
+      if (oldPanel && window.gsap) {
+        gsap.to(oldPanel, {
+          opacity: 0, y: 6, duration: 0.12, ease: 'power2.in',
+          onComplete: () => {
+            this.tab = newName;
+            this.$nextTick(() => {
+              this.reinitIcons();
+              var np = this.$refs['panel' + this.capitalize(newName)];
+              if (np) gsap.fromTo(np, { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.25, ease: 'power2.out' });
+            });
+          }
+        });
+      } else {
+        this.tab = name;
+        this.$nextTick(() => this.reinitIcons());
+      }
+    },
+
+    capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); },
+
+    toggleTheme() {
+      this.isDark = !this.isDark;
+      localStorage.setItem('nanobot-theme', this.isDark ? 'dark' : 'light');
+      this.applyTheme();
+      this.$nextTick(() => this.reinitIcons());
+    },
+
+    refresh() {
+      this.refreshDeg += 360;
+      this.fetchData();
+    },
+
+    async fetchData() {
+      try {
+        this.error = null;
+        /* Show updating indicator for background refreshes, skeleton for first load */
+        if (this.data) {
+          this.updating = true;
+        }
+
+        var res = await fetch('/api/status');
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        var json = await res.json();
+
+        this.data = json;
+        this.firstLoad = false;
+        this.updating = false;
+
+        this.$nextTick(() => {
+          this.reinitIcons();
+          /* Only animate the panel on the very first load */
+          if (!this._hasAnimatedInitial) {
+            this._hasAnimatedInitial = true;
+            var panel = this.$refs['panel' + this.capitalize(this.tab)];
+            if (panel && window.gsap) {
+              gsap.fromTo(panel, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.35, ease: 'power2.out' });
+            }
+          }
+        });
+      } catch (e) {
+        this.updating = false;
+        if (!this.data) {
+          this.firstLoad = false;
+        }
+        this.error = e.message || 'Connection failed';
+        this.$nextTick(() => this.reinitIcons());
+      }
+    },
+
+    // Icons
+    reinitIcons() {
+      if (window.lucide) {
+        // Clear previously initialized icons to prevent duplication
+        document.querySelectorAll('[data-lucide]').forEach(el => {
+          if (el.hasAttribute('data-initialized')) {
+            el.innerHTML = '';
+            el.removeAttribute('data-initialized');
+          }
+        });
+        lucide.createIcons();
+        document.querySelectorAll('[data-lucide]').forEach(el => el.setAttribute('data-initialized', 'true'));
+      }
+    },
+
+    /* Formatters */
+    fmtUptime(s) {
+      if (!s) return 'N/A';
+      var d = Math.floor(s / 86400);
+      var h = Math.floor((s % 86400) / 3600);
+      var m = Math.floor((s % 3600) / 60);
+      if (d) return d + 'd ' + h + 'h';
+      if (h) return h + 'h ' + m + 'm';
+      return m + 'm';
+    },
+    fmtTs(v) {
+      if (!v) return 'N/A';
+      return new Date(v).toLocaleString('ja-JP', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    },
+    fmtMem(v) { return v ? Math.round(v) + ' MB' : 'N/A'; },
+    clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); },
+    memPercent(pct) { return pct ? this.clamp(pct, 0, 100) : 0; },
+
+    cpuColor(pct) {
+      if (pct > 80) return 'var(--red)';
+      if (pct > 50) return 'var(--orange)';
+      return 'var(--tint)';
+    },
+    memColor(pct) {
+      if (pct > 80) return 'var(--red)';
+      if (pct > 50) return 'var(--orange)';
+      return 'var(--green)';
+    },
+
+    enabledChannels() {
+      if (!this.data || !this.data.config.channels) return 0;
+      return Object.values(this.data.config.channels).filter(function(c) { return c.enabled; }).length;
+    },
+
+    sessColor() {
+      if (!this.data) return 'var(--label-tertiary)';
+      var st = this.data.sessions.status;
+      if (st === 'thinking') return 'var(--orange)';
+      if (st === 'processing') return 'var(--tint)';
+      if (st === 'active') return 'var(--green)';
+      return 'var(--label-tertiary)';
+    },
+    sessLabel() {
+      if (!this.data) return 'Idle';
+      var st = this.data.sessions.status;
+      if (st === 'thinking') return 'Thinking...';
+      if (st === 'processing') return 'Processing...';
+      if (st === 'active') return 'Active';
+      return 'Idle';
+    },
+
+    tailscaleLabel() {
+      if (!this.data || !this.data.tailscale) return 'Tailscale: N/A';
+      var t = this.data.tailscale;
+      var status = t.online ? 'Online' : 'Offline';
+      var url = t.url ? ' · ' + t.url : '';
+      return 'Tailscale: ' + status + url;
+    },
+
+    async registerSW() {
+      if (!('serviceWorker' in navigator)) return;
+      try {
+        var reg = await navigator.serviceWorker.register('/sw.js');
+        this.swReg = reg;
+        if (reg.update) reg.update();
+        navigator.serviceWorker.addEventListener('controllerchange', () => { window.location.reload(); });
+      } catch (e) {
+      }
+    },
+
+    async checkForUpdate() {
+      try {
+        if (this.swReg && this.swReg.update) {
+          await this.swReg.update();
+        }
+        var regs = await navigator.serviceWorker.getRegistrations();
+        for (var r of regs) {
+          if (r.waiting) {
+            r.waiting.postMessage({ type: 'SKIP_WAITING' });
+            return;
+          }
+        }
+      } catch (e) {
+      }
+    }
+  };
+}
+</script>
+</body>
+</html>
